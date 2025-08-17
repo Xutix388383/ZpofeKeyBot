@@ -8,6 +8,8 @@ import string
 import time
 from datetime import datetime, timedelta
 import asyncio
+import threading
+from flask import Flask
 
 # Bot setup
 intents = discord.Intents.default()
@@ -1256,8 +1258,33 @@ async def on_command_error(ctx, error):
     else:
         await ctx.send(f"❌ An error occurred: {str(error)}")
 
+# Health check web server for Koyeb
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "ZpofeHub Discord Bot",
+        "uptime": "online",
+        "bot_ready": bot.is_ready() if 'bot' in globals() else False
+    }
+
+@app.route('/health')
+def health():
+    return {"status": "ok", "bot_status": "running"}
+
+def run_flask():
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
 if __name__ == "__main__":
     print("🚀 Starting ZpofeHub Discord Bot...")
+    print("🌐 Starting health check server on port 5000...")
+    
+    # Start Flask server in a separate thread
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    
     print("Checking for bot token...")
 
     bot_token = os.getenv('DISCORD_BOT_TOKEN')
