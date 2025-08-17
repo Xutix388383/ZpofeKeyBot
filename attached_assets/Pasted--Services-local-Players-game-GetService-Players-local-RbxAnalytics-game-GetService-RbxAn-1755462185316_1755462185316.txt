@@ -1,0 +1,345 @@
+--// Services
+local Players = game:GetService("Players")
+local RbxAnalytics = game:GetService("RbxAnalyticsService")
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+--// HWID
+local function getHWID()
+    return RbxAnalytics:GetClientId()
+end
+
+local hwid = getHWID()
+
+--// API Endpoints
+local verifyEndpoint = "https://imaginative-eleonore-zpofe-key-server-c645ec5b.koyeb.app/verify"
+local statusEndpoint = "https://imaginative-eleonore-zpofe-key-server-c645ec5b.koyeb.app/status/"
+local resetEndpoint = "https://imaginative-eleonore-zpofe-key-server-c645ec5b.koyeb.app/reset"
+
+--// Discord Webhooks
+local logWebhook = "https://discord.com/api/webhooks/1404969249201717379/N2GYn33X0LiijkdqcZkmCKcr4tQNl94bmcTmUT6IIVZDb8rQ6M3NxgN86ENCMh7YVwbN"
+local keyWebhook = "https://discord.com/api/webhooks/1404900022331375696/Vsc7frrjNS-u0OKs1_qwSjMIBQjBJoL2qC7kHV570n4QiROBfp003YWiH23vzoHQuChc"
+
+--// Key Save/Load
+local keyFile = "ZpofesKey.txt"
+local savedKey = isfile and readfile and isfile(keyFile) and readfile(keyFile) or nil
+
+--// Rayfield Loader
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+--// Execution Logger
+local function logExecution()
+    local executor = identifyexecutor and identifyexecutor() or "Unknown"
+    local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name or "Unknown"
+    local placeId = game.PlaceId
+    local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+
+    local data = {
+        content = string.format(
+            "🚀 **Loader Executed**\nHWID: `%s`\nExecutor: `%s`\nGame: `%s`\nPlace ID: `%s`\nTime: `%s`\nVersion: `v1.3`",
+            hwid, executor, gameName, placeId, timestamp
+        )
+    }
+
+    pcall(function()
+        HttpService:PostAsync(logWebhook, HttpService:JSONEncode(data), Enum.HttpContentType.ApplicationJson)
+    end)
+end
+
+logExecution()
+
+--// GUI Setup
+local Window = Rayfield:CreateWindow({
+    Name = "🔐 Zpofes Hub Login",
+    LoadingTitle = "Authenticating...",
+    LoadingSubtitle = "HWID Locked Access",
+    Theme = "Midnight",
+    Background = "https://raw.githubusercontent.com/zpofes/assets/main/nebula.png",
+    ConfigurationSaving = { Enabled = false }
+})
+
+local AuthTab = Window:CreateTab("🔑 Authenticate", 4483362458)
+
+local hwidLabel = AuthTab:CreateParagraph({
+    Title = "🔒 Your HWID",
+    Content = hwid
+})
+
+local statusParagraph = AuthTab:CreateParagraph({
+    Title = "Status",
+    Content = "Awaiting key..."
+})
+
+local keyAuthorized = false
+local currentKey = ""
+local fallbackButton = nil
+
+--// Discord Logger for Key Attempts
+local function logAttempt(key, status)
+    local executor = identifyexecutor and identifyexecutor() or "Unknown"
+    local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name or "Unknown"
+    local placeId = game.PlaceId
+    local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+
+    local data = {
+        content = string.format(
+            "🔐 **Auth Attempt**\nKey: `%s`\nHWID: `%s`\nExecutor: `%s`\nGame: `%s`\nPlace ID: `%s`\nStatus: `%s`\nTime: `%s`",
+            key, hwid, executor, gameName, placeId, status, timestamp
+        )
+    }
+
+    pcall(function()
+        HttpService:PostAsync(keyWebhook, HttpService:JSONEncode(data), Enum.HttpContentType.ApplicationJson)
+    end)
+end
+
+--// Load Full Hub
+function loadHub(usedKey)
+    local HubWindow = Rayfield:CreateWindow({
+        Name = "🛰️ Zpofes Hub v1.3",
+        LoadingTitle = "Zpofes Interface Suite",
+        LoadingSubtitle = "⚡ Tactical. Trusted. Stealth.",
+        Theme = "Midnight",
+        Background = "https://raw.githubusercontent.com/zpofes/assets/main/nebula.png",
+        ConfigurationSaving = {
+            Enabled = true,
+            FolderName = "Zpofes",
+            FileName = "ZpofesHub"
+        },
+        Discord = {
+            Enabled = true,
+            Invite = "C6agZhmhCA",
+            RememberJoins = true
+        }
+    })
+
+    Rayfield:LoadConfiguration()
+
+    local UtilitiesTab = HubWindow:CreateTab("🧰 Utilities by Zpofe", 4483362458)
+    UtilitiesTab:CreateParagraph({
+        Title = "📦 Tactical Utilities",
+        Content = "Elite modules curated by Zpofe. Trusted. Stealth. Executor-safe."
+    })
+    UtilitiesTab:CreateButton({
+        Name = "🛡️ Load Anti Crasher",
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/Wss94WD4"))()
+        end
+    })
+
+    local HyperTab = HubWindow:CreateTab("🎯 HyperShot", 4483362458)
+    HyperTab:CreateParagraph({
+        Title = "🔫 HyperShot Module",
+        Content = "Features: Hitbox, Auto Farm, ESP\nStatus: In development but functional"
+    })
+    HyperTab:CreateButton({
+        Name = "🎮 Load HyperShot",
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/ZGHAFH9X"))()
+        end
+    })
+
+    local BronxTab = HubWindow:CreateTab("💸 Bronx 3", 4483362458)
+    BronxTab:CreateParagraph({
+        Title = "🤑 Bronx 3 Exploits",
+        Content = "Premium market exploits and dupes"
+    })
+    BronxTab:CreateButton({
+        Name = "💰 Market Dupe",
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/nYtvhF7N"))()
+        end
+    })
+
+    local SpooferTab = HubWindow:CreateTab("🌐 IP Spoofer", 4483362458)
+    SpooferTab:CreateParagraph({
+        Title = "🕵️ IP Spoofing Module",
+        Content = "Coming soon. Stealth-grade IP masking. Zpofe exclusive."
+    })
+    SpooferTab:CreateButton({
+        Name = "🌐 Load IP Spoofer",
+        Callback = function()
+            Rayfield:Notify({
+                Title = "🚧 Coming Soon",
+                Content = "IP Spoofer module is under development.",
+                Duration = 6
+            })
+        end
+    })
+
+    local AccessTab = HubWindow:CreateTab("🔧 Access Info", 4483362458)
+    AccessTab:CreateParagraph({
+        Title = "🔑 Saved License Key",
+        Content = usedKey or "No key saved."
+    })
+    AccessTab:CreateParagraph({
+        Title = "🧠 HWID",
+        Content = hwid
+    })
+    AccessTab:CreateButton({
+        Name = "🧹 Reset Key",
+        Callback = function()
+            if delfile and isfile(keyFile) then
+                delfile(keyFile)
+                Rayfield:Notify({
+                    Title = "🔁 Key Reset",
+                    Content = "Saved key removed. Please re-execute to re-authenticate.",
+                    Duration = 6
+                })
+            else
+                Rayfield:Notify({
+                    Title = "⚠️ Reset Failed",
+                    Content = "Executor does not support file deletion.",
+                    Duration = 6
+                })
+            end
+        end
+    })
+end
+
+--// Key Verification
+function authenticateKey(inputKey)
+    local verifyURL = verifyEndpoint .. "?key=" .. inputKey .. "&hwid=" .. hwid
+
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(verifyURL))
+    end)
+
+    if success and response.success then
+        keyAuthorized = true
+        if writefile then writefile(keyFile, inputKey) end
+        statusParagraph:Set({Title = "✅ Authorized", Content = response.message})
+        logAttempt(inputKey, "✅ Authorized")
+
+        task.delay(0.5, function()
+            Window:DeleteTab(AuthTab)
+            task.spawn(function()
+                local ok, err = pcall(function()
+                    loadHub(inputKey)
+                end)
+                if not ok and fallbackButton then
+                    fallbackButton:SetVisible(true)
+                    Rayfield:Notify({
+                        Title = "⚠️ Hub Load Error",
+                        Content = "Click 'Load Hub Manually' to retry.",
+                        Duration = 6
+                    })
+                end
+            end)
+        end)
+    else
+        statusParagraph:Set({Title = "❌ Invalid Key", Content = response.message or "Key not recognized."})
+        logAttempt(inputKey, "❌ Denied")
+    end
+end
+
+--// Status Check
+function checkKeyStatus(inputKey)
+    local statusURL = statusEndpoint .. inputKey
+
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(statusURL))
+    end)
+
+    if success and response.success then
+        statusParagraph:Set({
+            Title = "📊 Key Status",
+            Content = string.format("HWID: %s\nCreated: %s\nTemp: %s",
+                response.hwid or "None",
+                response.createdAt and os.date("%Y-%m-%d %H:%M:%S", response.createdAt / 1000) or "Unknown",
+                tostring(response.temp))
+        })
+    else
+        statusParagraph:Set({Title = "❌ Status Error", Content = response.message or "Key not found."})
+    end
+end
+
+--// HWID Reset
+function resetHWID(inputKey)
+    local payload = HttpService:JSONEncode({ key = inputKey })
+
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpPost(resetEndpoint, payload, Enum.HttpContentType.ApplicationJson))
+    end)
+
+    if success and response.success then
+        statusParagraph:Set({Title = "🔄 HWID Reset", Content = response.message})
+        logAttempt(inputKey, "🔄 HWID Reset")
+    else
+        statusParagraph:Set({Title = "❌ Reset Failed", Content = response.message or "Key not found."})
+    end
+end
+
+--// Key Input
+AuthTab:CreateInput({
+    Name = "Enter License Key",
+    PlaceholderText = "Format: ZPOFES-XXXXXXX",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(key)
+        currentKey = key
+        statusParagraph:Set({Title = "🔍 Key Ready", Content = "Press 'Check Key' to verify."})
+    end
+})
+
+--// Check Key Button
+AuthTab:CreateButton({
+    Name = "✅ Check Key",
+    Callback = function()
+        if currentKey and currentKey:match("^ZPOFES%-%w+$") then
+            authenticateKey(currentKey)
+        else
+            statusParagraph:Set({Title = "⚠️ Invalid Format", Content = "Key must match ZPOFES-XXXXXXX"})
+        end
+    end
+})
+
+--// Get Stats Button
+AuthTab:CreateButton({
+    Name = "📊 Get Key Stats",
+    Callback = function()
+        if currentKey and currentKey:match("^ZPOFES%-%w+$") then
+            checkKeyStatus(currentKey)
+        else
+            statusParagraph:Set({Title = "⚠️ Invalid Format", Content = "Key must match ZPOFES-XXXXXXX"})
+        end
+    end
+})
+
+--// Reset HWID Button
+AuthTab:CreateButton({
+    Name = "🔄 Reset HWID",
+    Callback = function()
+        if currentKey and currentKey:match("^ZPOFES%-%w+$") then
+            resetHWID(currentKey)
+        else
+            statusParagraph:Set({Title = "⚠️ Invalid Format", Content = "Key must match ZPOFES-XXXXXXX"})
+        end
+    end
+})
+
+--// Load Hub Manually Button (hidden until authorized)
+fallbackButton = AuthTab:CreateButton({
+    Name = "🔁 Load Hub Manually",
+    Callback = function()
+        if keyAuthorized then
+            task.spawn(function()
+                local ok, err = pcall(function()
+                    loadHub(currentKey)
+                end)
+                if not ok then
+                    Rayfield:Notify({
+                        Title = "❌ Manual Load Failed",
+                        Content = err,
+                        Duration = 6
+                    })
+                end
+            end)
+        end
+    end
+})
+fallbackButton:SetVisible(false)
+
+--// Entry Point
+if savedKey then
+    authenticateKey(savedKey)
+end
