@@ -19,7 +19,6 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 # Key storage file
 KEYS_FILE = "keys.json"
 USERS_FILE = "users.json"
-SCRIPTS_FILE = "scripts.json"
 HWID_COOLDOWNS_FILE = "hwid_cooldowns.json"
 BLACKLIST_FILE = "blacklist.json"
 
@@ -51,15 +50,7 @@ def save_users(users):
     with open(USERS_FILE, 'w') as f:
         json.dump(users, f, indent=2)
 
-def load_scripts():
-    if os.path.exists(SCRIPTS_FILE):
-        with open(SCRIPTS_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def save_scripts(scripts):
-    with open(SCRIPTS_FILE, 'w') as f:
-        json.dump(scripts, f, indent=2)
+# Script functions removed - using API instead
 
 def load_hwid_cooldowns():
     if os.path.exists(HWID_COOLDOWNS_FILE):
@@ -85,8 +76,7 @@ def save_blacklist(blacklist):
 def generate_key():
     return "ZPOFES-" + ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
 
-def generate_script_id():
-    return ''.join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+# Script ID generator removed - using API instead
 
 # Bot events
 @bot.event
@@ -100,7 +90,7 @@ async def on_ready():
         print(f"✅ Synced {len(synced)} command(s)")
 
         # Create data files if they don't exist
-        for file_path in [KEYS_FILE, USERS_FILE, SCRIPTS_FILE, HWID_COOLDOWNS_FILE, BLACKLIST_FILE]:
+        for file_path in [KEYS_FILE, USERS_FILE, HWID_COOLDOWNS_FILE, BLACKLIST_FILE]:
             if not os.path.exists(file_path):
                 with open(file_path, 'w') as f:
                     json.dump({}, f)
@@ -629,7 +619,7 @@ DASHBOARD_TEMPLATE = '''
         <div class="nav">
             <a href="/admin" class="{% if page == 'dashboard' %}active{% endif %}">📊 Dashboard</a>
             <a href="/admin/keys" class="{% if page == 'keys' %}active{% endif %}">🔑 Keys</a>
-            <a href="/admin/scripts" class="{% if page == 'scripts' %}active{% endif %}">📜 Scripts</a>
+            <a href="/admin/api" class="{% if page == 'api' %}active{% endif %}">🔗 API</a>
             <a href="/admin/users" class="{% if page == 'users' %}active{% endif %}">👥 Users</a>
             <a href="/admin/blacklist" class="{% if page == 'blacklist' %}active{% endif %}">⛔ Blacklist</a>
             <button class="logout" onclick="window.location.href='/logout'">🚪 Logout</button>
@@ -703,12 +693,10 @@ def logout():
 @login_required
 def admin_dashboard():
     keys = load_keys()
-    scripts = load_scripts()
     blacklist = load_blacklist()
 
     total_keys = len(keys)
     active_keys = sum(1 for k in keys.values() if not k.get("expires_at") or time.time() < k["expires_at"])
-    total_scripts = len(scripts)
     blacklisted_users = len(blacklist)
 
     content = f'''
@@ -725,8 +713,8 @@ def admin_dashboard():
                     <div>Active Keys</div>
                 </div>
                 <div style="text-align: center;">
-                    <div class="stat">{total_scripts}</div>
-                    <div>Scripts</div>
+                    <div class="stat">API</div>
+                    <div>Mode</div>
                 </div>
                 <div style="text-align: center;">
                     <div class="stat">{blacklisted_users}</div>
