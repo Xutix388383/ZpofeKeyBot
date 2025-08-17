@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": 1,
+    "name": "Bronx Dupe",
+    "description": "Prob won\u2019t work but ehh try it 50/50",
+    "price": 0.0,
+    "category": "Tha Bronx 3",
+    "created_at": "2025-08-17T23:40:42.562449"
+  },
+  {
+    "id": 2,
+    "name": "Anti Crasher (Universal)",
+    "description": "May make your game look shit but stops memory overdoing and fps boost like hell \n\nWorks!! \u2705",
+    "price": 4.99,
+    "category": "Tools \ud83e\uddf0",
+    "created_at": "2025-08-17T23:44:05.319960"
+  },
+  {
+    "id": 3,
+    "name": "HYPERSHOT!!",
+    "description": "Will be updating but has hitbox,esp,auto farm \n\nAuto farms tps ppl infront of u shoot them",
+    "price": 2.99,
+    "category": "Hypershot\ud83d\udd2b",
+    "created_at": "2025-08-17T23:45:38.589382"
+  }
+]

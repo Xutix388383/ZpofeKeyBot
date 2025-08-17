@@ -1,29 +1,15 @@
 
-# Script Marketplace
+# Discord Script Marketplace Bot
 
-A complete script marketplace with Flask web interface and Discord bot integration.
+A complete Discord bot-based script marketplace with admin panel and user management.
 
 ## Setup Instructions
 
-### 1. Flask Web Application
+### 1. Discord Bot Setup
 
-The Flask app provides an admin panel where you can manage scripts and view orders.
-
-**Admin Credentials:**
-- Username: `Zpofe0902`
-- Password: `0902`
-
-**To run the Flask app:**
-```bash
-python main.py
-```
-
-Visit `http://localhost:5000` to access the marketplace.
-Visit `http://localhost:5000/admin` to access the admin panel.
-
-### 2. Discord Bot Setup
-
-The Discord bot provides a shop command that creates an interactive panel for users to browse and purchase scripts.
+The Discord bot provides two main slash commands:
+- `/shop` - Interactive marketplace for users to browse and purchase scripts
+- `/admin` - Complete admin panel for marketplace management (admin only)
 
 **Setup Steps:**
 
@@ -34,48 +20,94 @@ The Discord bot provides a shop command that creates an interactive panel for us
    - Copy the bot token
 
 2. **Configure the Bot:**
-   - Open `bot.py`
-   - Replace `'YOUR_BOT_TOKEN'` with your actual bot token
-   - Replace `'YOUR_USER_ID'` with your Discord user ID (for purchase notifications)
-   - Update `MARKETPLACE_URL` when you deploy your Flask app
+   - Add your bot token as a secret named `BOT_TOKEN` or `bot_token`
+   - Update `ADMIN_ROLE_ID` and `BUYER_ROLE_ID` in the code with your server's role IDs
 
 3. **Invite Bot to Server:**
    - Go to OAuth2 > URL Generator in Discord Developer Portal
    - Select scopes: `bot`, `applications.commands`
-   - Select permissions: `Send Messages`, `Use Slash Commands`, `Embed Links`
+   - Select permissions: `Send Messages`, `Use Slash Commands`, `Embed Links`, `Manage Roles`
    - Use the generated URL to invite the bot
 
 4. **Run the Bot:**
    ```bash
-   python bot.py
+   python marketplace_bot.py
    ```
 
-### 3. Bot Commands
+### 2. Bot Commands
 
-- `!shop` - Display the interactive script marketplace panel
-- `!scripts` - List all available scripts
-- `!help_shop` - Show help for shop commands
+**User Commands:**
+- `/shop` - Display the interactive script marketplace panel
+- `/get_scripts` - Access purchased scripts (requires Buyer role)
+
+**Admin Commands:**
+- `/admin` - Access the complete admin control panel
+
+### 3. Admin Panel Features
+
+The `/admin` command provides a comprehensive management interface:
+
+**Script Management:**
+- Add new scripts with pricing and categories
+- Edit existing scripts (name, price, description)
+- Delete scripts from the marketplace
+- View all scripts with details
+
+**User Management:**
+- Assign scripts to specific users
+- View user script assignments
+- Remove scripts from users
+- Give buyer role to users manually
+
+**Ticket Management:**
+- View all payment verification tickets
+- Verify payments and assign buyer roles
+- Track ticket status and history
+
+**Order Management:**
+- View all customer orders
+- Track order status and revenue
+- Monitor purchase history
 
 ### 4. Features
 
-**Flask Web Interface:**
-- Professional admin panel
-- Add/manage scripts
-- View orders and statistics
-- Secure login system
+**Interactive Shop:**
+- Paginated script browsing
+- Shopping cart system
+- Add/remove items from cart
+- Secure checkout process
 
-**Discord Bot:**
-- Interactive shop panel with buttons
-- Purchase modal forms
-- Automatic order processing
-- Professional embeds and UI
+**Admin Panel:**
+- Role-based access control
+- Complete marketplace management
+- User script assignment system
+- Payment verification workflow
 
-**Script Management:**
-- Categories and pricing
-- Feature lists
-- Demo links
-- Order tracking
+**Security:**
+- Admin-only access to management functions
+- Role-based permissions
+- Secure user verification
 
-### 5. Deployment
+### 5. Role Configuration
 
-Deploy both the Flask app and Discord bot on Replit or your preferred hosting platform. Make sure to update the `MARKETPLACE_URL` in the bot code to point to your deployed Flask application.
+Make sure to create these roles in your Discord server:
+- **Admin Role** - For marketplace administrators
+- **Buyer Role** - For verified customers who can access purchased scripts
+
+Update the role IDs in the code:
+```python
+ADMIN_ROLE_ID = YOUR_ADMIN_ROLE_ID
+BUYER_ROLE_ID = YOUR_BUYER_ROLE_ID
+```
+
+### 6. Data Storage
+
+The bot uses JSON files for data storage:
+- `scripts.json` - Script inventory
+- `orders.json` - Customer orders
+- `tickets.json` - Payment verification tickets
+- `user_scripts.json` - User script assignments
+
+### 7. Deployment
+
+Deploy the bot on Replit or your preferred hosting platform. The bot will automatically create necessary data files on first run.
