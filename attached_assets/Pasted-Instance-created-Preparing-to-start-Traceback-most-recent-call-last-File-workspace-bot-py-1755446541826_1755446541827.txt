@@ -1,0 +1,73 @@
+Instance created. Preparing to start...
+Traceback (most recent call last):
+  File "/workspace/bot.py", line 2, in <module>
+    import discord
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/__init__.py", line 23, in <module>
+    from .client import *
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/client.py", line 51, in <module>
+    from .user import User, ClientUser
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/user.py", line 29, in <module>
+    import discord.abc
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/abc.py", line 59, in <module>
+    from .voice_client import VoiceClient, VoiceProtocol
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/voice_client.py", line 53, in <module>
+    from .player import AudioPlayer, AudioSource
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/player.py", line 28, in <module>
+    import audioop
+ModuleNotFoundError: No module named 'audioop'
+Application exited with code 1. This usually indicates an application failure. Check that the command used to launch your application is correct.
+Application exited with code 1. This usually indicates an application failure. Check that the command used to launch your application is correct.
+Traceback (most recent call last):
+  File "/workspace/bot.py", line 2, in <module>
+    import discord
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/__init__.py", line 23, in <module>
+    from .client import *
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/client.py", line 51, in <module>
+    from .user import User, ClientUser
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/user.py", line 29, in <module>
+    import discord.abc
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/abc.py", line 59, in <module>
+    from .voice_client import VoiceClient, VoiceProtocol
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/voice_client.py", line 53, in <module>
+    from .player import AudioPlayer, AudioSource
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/player.py", line 28, in <module>
+    import audioop
+ModuleNotFoundError: No module named 'audioop'
+Instance stopped.
+Instance created. Preparing to start...
+Traceback (most recent call last):
+  File "/workspace/bot.py", line 2, in <module>
+    import discord
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/__init__.py", line 23, in <module>
+    from .client import *
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/client.py", line 51, in <module>
+    from .user import User, ClientUser
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/user.py", line 29, in <module>
+    import discord.abc
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/abc.py", line 59, in <module>
+Application exited with code 1. This usually indicates an application failure. Check that the command used to launch your application is correct.
+    from .voice_client import VoiceClient, VoiceProtocol
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/voice_client.py", line 53, in <module>
+    from .player import AudioPlayer, AudioSource
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/player.py", line 28, in <module>
+    import audioop
+ModuleNotFoundError: No module named 'audioop'
+Traceback (most recent call last):
+  File "/workspace/bot.py", line 2, in <module>
+    import discord
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/__init__.py", line 23, in <module>
+    from .client import *
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/client.py", line 51, in <module>
+    from .user import User, ClientUser
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/user.py", line 29, in <module>
+    import discord.abc
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/abc.py", line 59, in <module>
+    from .voice_client import VoiceClient, VoiceProtocol
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/voice_client.py", line 53, in <module>
+    from .player import AudioPlayer, AudioSource
+  File "/workspace/.heroku/python/lib/python3.13/site-packages/discord/player.py", line 28, in <module>
+    import audioop
+ModuleNotFoundError: No module named 'audioop'
+Application exited with code 1. This usually indicates an application failure. Check that the command used to launch your application is correct.
+Instance is starting... Waiting for health checks to pass.
+Instance stopped.
