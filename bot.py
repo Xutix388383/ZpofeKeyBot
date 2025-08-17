@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -29,6 +30,14 @@ STAFF_ROLE_ID = 1399949855799119952
 # Flask admin authentication key
 ADMIN_KEY = "ZpofeAdmin97492"
 
+# Railway configuration
+RAILWAY_PROJECT_ID = os.getenv('RAILWAY_PROJECT_ID', '65b982a6-3171-4941-87b4-4bce383b871d')
+RAILWAY_SERVICE_ID = os.getenv('RAILWAY_SERVICE_ID', '2b640fd2-cb83-4641-b670-14c79bfa359b')
+
+# Platform detection
+PLATFORM = "Railway" if os.getenv('RAILWAY_ENVIRONMENT') else "Replit"
+DEPLOYMENT_URL = os.getenv('RAILWAY_STATIC_URL', 'https://workspace-zpofe.replit.app')
+
 # Load or create storage files
 def load_keys():
     if os.path.exists(KEYS_FILE):
@@ -49,8 +58,6 @@ def load_users():
 def save_users(users):
     with open(USERS_FILE, 'w') as f:
         json.dump(users, f, indent=2)
-
-# Script functions removed - using API instead
 
 def load_hwid_cooldowns():
     if os.path.exists(HWID_COOLDOWNS_FILE):
@@ -75,8 +82,6 @@ def save_blacklist(blacklist):
 # Generate random key
 def generate_key():
     return "ZPOFES-" + ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
-
-# Script ID generator removed - using API instead
 
 # Bot events
 @bot.event
@@ -450,6 +455,106 @@ def login_required(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+# API Routes
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "ZpofeHub API",
+        "timestamp": time.time(),
+        "railway_project": RAILWAY_PROJECT_ID,
+        "railway_service": RAILWAY_SERVICE_ID,
+        "deployment_url": DEPLOYMENT_URL,
+        "platform": PLATFORM,
+        "bot_status": "online" if bot.is_ready() else "offline"
+    })
+
+@app.route('/api/verify-key', methods=['POST'])
+def verify_key():
+    data = request.get_json()
+    if not data or 'key' not in data:
+        return jsonify({"error": "Key required"}), 400
+    
+    key = data['key']
+    hwid = data.get('hwid')
+    
+    # Check blacklist first
+    blacklist = load_blacklist()
+    keys = load_keys()
+    
+    if key not in keys:
+        return jsonify({"error": "Invalid key"}), 401
+    
+    key_data = keys[key]
+    
+    # Check if owner is blacklisted
+    if key_data.get('owner') and str(key_data['owner']) in blacklist:
+        return jsonify({"error": "User blacklisted"}), 403
+    
+    # Check if key is expired
+    if key_data.get('expires_at') and time.time() > key_data['expires_at']:
+        return jsonify({"error": "Key expired"}), 401
+    
+    # Check HWID binding
+    if key_data.get('hwid') and key_data['hwid'] != hwid:
+        return jsonify({"error": "HWID mismatch"}), 401
+    
+    # Bind HWID if not already bound
+    if not key_data.get('hwid') and hwid:
+        keys[key]['hwid'] = hwid
+        keys[key]['used'] = True
+        save_keys(keys)
+    
+    return jsonify({
+        "success": True,
+        "message": "Key verified successfully",
+        "key_type": key_data.get('type', 'perm'),
+        "bound": bool(key_data.get('hwid')),
+        "owner": key_data.get('owner')
+    })
+
+@app.route('/api/script', methods=['GET'])
+def get_script():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Authorization required"}), 401
+    
+    key = auth_header.replace('Bearer ', '')
+    keys = load_keys()
+    
+    if key not in keys:
+        return jsonify({"error": "Invalid key"}), 401
+    
+    key_data = keys[key]
+    
+    # Check if owner is blacklisted
+    blacklist = load_blacklist()
+    if key_data.get('owner') and str(key_data['owner']) in blacklist:
+        return jsonify({"error": "User blacklisted"}), 403
+    
+    # Check if key is expired
+    if key_data.get('expires_at') and time.time() > key_data['expires_at']:
+        return jsonify({"error": "Key expired"}), 401
+    
+    # Return your script loadstring here
+    return jsonify({
+        "success": True,
+        "script": "loadstring(game:HttpGet(\"https://pastebin.com/raw/DmRu7yE0\"))()",
+        "message": "Script loaded successfully",
+        "key_type": key_data.get('type', 'perm')
+    })
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    """Generic webhook endpoint for external integrations"""
+    data = request.get_json()
+    
+    # Log webhook data
+    print(f"Webhook received: {data}")
+    
+    # Process webhook data as needed
+    return jsonify({"status": "received", "timestamp": time.time()})
+
 # HTML Templates
 LOGIN_TEMPLATE = '''
 <!DOCTYPE html>
@@ -666,6 +771,7 @@ def home():
             <h1>🚀 ZpofeHub</h1>
             <h2>Premium Script Protection & License Management</h2>
             <p class="status">✅ Bot Status: Online and Operational</p>
+            <p>✅ API Status: Integrated and Running</p>
             <p>Join our Discord server to access premium scripts and license management.</p>
             <a href="/login" class="admin-link">🔐 Admin Panel</a>
         </div>
@@ -698,6 +804,7 @@ def admin_dashboard():
     total_keys = len(keys)
     active_keys = sum(1 for k in keys.values() if not k.get("expires_at") or time.time() < k["expires_at"])
     blacklisted_users = len(blacklist)
+    bot_status = "🟢 Online" if bot.is_ready() else "🔴 Offline"
 
     content = f'''
     <div class="container">
@@ -713,8 +820,8 @@ def admin_dashboard():
                     <div>Active Keys</div>
                 </div>
                 <div style="text-align: center;">
-                    <div class="stat">API</div>
-                    <div>Mode</div>
+                    <div class="stat">{bot_status}</div>
+                    <div>Bot Status</div>
                 </div>
                 <div style="text-align: center;">
                     <div class="stat">{blacklisted_users}</div>
@@ -726,13 +833,85 @@ def admin_dashboard():
         <div class="card">
             <h3>🚀 Quick Actions</h3>
             <a href="/admin/keys/generate" class="btn btn-success">🆕 Generate New Key</a>
-            <a href="/admin/scripts/upload" class="btn btn-primary">📤 Upload Script</a>
             <a href="/admin/users/blacklist" class="btn btn-danger">⛔ Blacklist User</a>
+        </div>
+
+        <div class="card">
+            <h3>🔗 API Information</h3>
+            <p><strong>API Base URL:</strong> <code>http://0.0.0.0:5000/api</code></p>
+            <p><strong>Health Check:</strong> <code>GET /api/health</code></p>
+            <p><strong>Verify Key:</strong> <code>POST /api/verify-key</code></p>
+            <p><strong>Get Script:</strong> <code>GET /api/script</code> (with Bearer token)</p>
+            <p><strong>Webhook:</strong> <code>POST /webhook</code></p>
         </div>
     </div>
     '''
 
     return render_template_string(DASHBOARD_TEMPLATE, content=content, page='dashboard')
+
+@app.route('/admin/api')
+@login_required
+def admin_api():
+    content = '''
+    <div class="card">
+        <h3>🔗 API Documentation</h3>
+        
+        <h4>Health Check</h4>
+        <p><strong>Endpoint:</strong> <code>GET /api/health</code></p>
+        <p><strong>Description:</strong> Check API and bot status</p>
+        <pre style="background: #333; padding: 15px; border-radius: 5px;">
+{
+  "status": "healthy",
+  "service": "ZpofeHub API",
+  "timestamp": 1692280800,
+  "railway_project": "your-project-id",
+  "railway_service": "your-service-id",
+  "bot_status": "online"
+}
+        </pre>
+
+        <h4>Verify Key</h4>
+        <p><strong>Endpoint:</strong> <code>POST /api/verify-key</code></p>
+        <p><strong>Description:</strong> Verify a license key and bind HWID</p>
+        <p><strong>Request Body:</strong></p>
+        <pre style="background: #333; padding: 15px; border-radius: 5px;">
+{
+  "key": "ZPOFES-XXXXXXXXX",
+  "hwid": "optional-hardware-id"
+}
+        </pre>
+        <p><strong>Success Response:</strong></p>
+        <pre style="background: #333; padding: 15px; border-radius: 5px;">
+{
+  "success": true,
+  "message": "Key verified successfully",
+  "key_type": "perm",
+  "bound": true,
+  "owner": "user_id"
+}
+        </pre>
+
+        <h4>Get Script</h4>
+        <p><strong>Endpoint:</strong> <code>GET /api/script</code></p>
+        <p><strong>Description:</strong> Get script loadstring with valid key</p>
+        <p><strong>Headers:</strong> <code>Authorization: Bearer ZPOFES-XXXXXXXXX</code></p>
+        <p><strong>Success Response:</strong></p>
+        <pre style="background: #333; padding: 15px; border-radius: 5px;">
+{
+  "success": true,
+  "script": "loadstring(game:HttpGet(\\"https://pastebin.com/raw/DmRu7yE0\\"))()",
+  "message": "Script loaded successfully",
+  "key_type": "perm"
+}
+        </pre>
+
+        <h4>Webhook</h4>
+        <p><strong>Endpoint:</strong> <code>POST /webhook</code></p>
+        <p><strong>Description:</strong> Railway webhook endpoint for deployment events</p>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='api')
 
 @app.route('/admin/keys')
 @login_required
@@ -837,98 +1016,6 @@ def delete_key(key):
         del keys[key]
         save_keys(keys)
     return redirect('/admin/keys')
-
-@app.route('/admin/scripts')
-@login_required
-def admin_scripts():
-    scripts = load_scripts()
-
-    content = '''
-    <div class="card">
-        <h3>📜 Script Management</h3>
-        <a href="/admin/scripts/upload" class="btn btn-success">📤 Upload Script</a>
-        <table style="margin-top: 20px;">
-            <tr>
-                <th>Name</th>
-                <th>ID</th>
-                <th>Description</th>
-                <th>Downloads</th>
-                <th>Executions</th>
-                <th>Created</th>
-            </tr>
-    '''
-
-    for script_id, data in scripts.items():
-        created = datetime.fromtimestamp(data['created_at']).strftime('%Y-%m-%d %H:%M')
-
-        content += f'''
-            <tr>
-                <td><strong>{data['name']}</strong></td>
-                <td><code>{script_id}</code></td>
-                <td>{data['description'][:50]}...</td>
-                <td>{data['downloads']}</td>
-                <td>{data['executions']}</td>
-                <td>{created}</td>
-            </tr>
-        '''
-
-    content += '''
-        </table>
-    </div>
-    '''
-
-    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
-
-@app.route('/admin/scripts/upload', methods=['GET', 'POST'])
-@login_required
-def upload_script():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        description = request.form.get('description', 'No description provided')
-
-        scripts = load_scripts()
-        script_id = generate_script_id()
-
-        scripts[script_id] = {
-            "name": name,
-            "description": description,
-            "owner": "admin",
-            "created_at": time.time(),
-            "downloads": 0,
-            "executions": 0
-        }
-
-        save_scripts(scripts)
-
-        content = f'''
-        <div class="card success">
-            <h3>✅ Script Uploaded Successfully</h3>
-            <p><strong>Name:</strong> {name}</p>
-            <p><strong>Script ID:</strong> <code>{script_id}</code></p>
-            <a href="/admin/scripts" class="btn btn-primary">← Back to Scripts</a>
-        </div>
-        '''
-        return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
-
-    content = '''
-    <div class="card">
-        <h3>📤 Upload New Script</h3>
-        <form method="POST">
-            <div class="form-group">
-                <label>Script Name:</label>
-                <input type="text" name="name" required>
-            </div>
-            <div class="form-group">
-                <label>Description:</label>
-                <textarea name="description" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-success">📤 Upload Script</button>
-            <a href="/admin/scripts" class="btn btn-primary">← Back</a>
-        </form>
-    </div>
-    '''
-
-    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
 
 @app.route('/admin/users')
 @login_required
@@ -1089,23 +1176,27 @@ def remove_blacklist(user_id):
 
 @app.route('/health')
 def health():
-    return {"status": "ok", "bot_status": "running"}
+    return {"status": "ok", "bot_status": "running", "api_integrated": True}
 
 @app.route('/api/status')
 def api_status():
     return {
         "status": "healthy",
-        "service": "ZpofeHub Discord Bot",
+        "service": "ZpofeHub Discord Bot with Integrated API",
         "uptime": "online",
-        "bot_ready": bot.is_ready() if 'bot' in globals() else False
+        "bot_ready": bot.is_ready() if 'bot' in globals() else False,
+        "platform": PLATFORM,
+        "railway_project": RAILWAY_PROJECT_ID,
+        "railway_service": RAILWAY_SERVICE_ID,
+        "deployment_url": DEPLOYMENT_URL
     }
 
 def run_flask():
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 if __name__ == "__main__":
-    print("🚀 Starting ZpofeHub Discord Bot...")
-    print("🌐 Starting Flask admin server on port 5000...")
+    print("🚀 Starting ZpofeHub Discord Bot with Integrated API...")
+    print("🌐 Starting Flask server on port 5000...")
 
     # Start Flask server in a separate thread
     flask_thread = threading.Thread(target=run_flask, daemon=True)
@@ -1120,8 +1211,14 @@ if __name__ == "__main__":
         exit(1)
 
     print("✅ Bot token found, starting bot...")
-    print(f"🔐 Admin panel accessible at: http://localhost:5000/login")
+    print(f"🔐 Admin panel accessible at: http://0.0.0.0:5000/login")
     print(f"🔑 Admin key: {ADMIN_KEY}")
+    print(f"🔗 API endpoints available at: http://0.0.0.0:5000/api/")
+    print(f"🌐 Deployment URL: {DEPLOYMENT_URL}")
+    print(f"📡 Platform: {PLATFORM}")
+    if PLATFORM == "Railway":
+        print(f"🚂 Railway Project: {RAILWAY_PROJECT_ID}")
+        print(f"🚂 Railway Service: {RAILWAY_SERVICE_ID}")
 
     try:
         bot.run(bot_token)
