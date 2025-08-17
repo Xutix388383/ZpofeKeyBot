@@ -182,7 +182,7 @@ class StaffPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="📊 Dashboard", style=discord.ButtonStyle.primary, emoji="📊")
+    @discord.ui.button(label="Dashboard", style=discord.ButtonStyle.primary, emoji="📊")
     async def dashboard(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Check if user has staff role for access
         staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
@@ -198,7 +198,7 @@ class StaffPanelView(discord.ui.View):
             return
         await show_dashboard(interaction)
 
-    @discord.ui.button(label="🔑 Keys", style=discord.ButtonStyle.secondary, emoji="🔑")
+    @discord.ui.button(label="Keys", style=discord.ButtonStyle.secondary, emoji="🔑")
     async def keys(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Check if user has staff role for access
         staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
@@ -214,7 +214,7 @@ class StaffPanelView(discord.ui.View):
             return
         await show_key_management(interaction)
 
-    @discord.ui.button(label="📝 Scripts", style=discord.ButtonStyle.secondary, emoji="📝")
+    @discord.ui.button(label="Scripts", style=discord.ButtonStyle.secondary, emoji="📝")
     async def scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Check if user has staff role for access
         staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
@@ -230,7 +230,7 @@ class StaffPanelView(discord.ui.View):
             return
         await show_script_management(interaction)
 
-    @discord.ui.button(label="⚙️ Settings", style=discord.ButtonStyle.secondary, emoji="⚙️")
+    @discord.ui.button(label="Settings", style=discord.ButtonStyle.secondary, emoji="⚙️")
     async def settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Check if user has staff role for access
         staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
@@ -250,25 +250,25 @@ class KeyManagementView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="🆕 Generate Key", style=discord.ButtonStyle.success, emoji="🆕")
+    @discord.ui.button(label="Generate Key", style=discord.ButtonStyle.success, emoji="🆕")
     async def generate_key_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await show_key_generation(interaction)
 
-    @discord.ui.button(label="📋 List Keys", style=discord.ButtonStyle.primary, emoji="📋")
+    @discord.ui.button(label="List Keys", style=discord.ButtonStyle.primary, emoji="📋")
     async def list_keys(self, interaction: discord.Interaction, button: discord.ui.Button):
         await show_key_list(interaction)
 
-    @discord.ui.button(label="🔍 Key Info", style=discord.ButtonStyle.secondary, emoji="🔍")
+    @discord.ui.button(label="Key Info", style=discord.ButtonStyle.secondary, emoji="🔍")
     async def key_info(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = KeyInfoModal()
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="🗑️ Delete Key", style=discord.ButtonStyle.danger, emoji="🗑️")
+    @discord.ui.button(label="Delete Key", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def delete_key(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = DeleteKeyModal()
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="🔙 Back", style=discord.ButtonStyle.secondary, emoji="🔙")
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
     async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = StaffPanelView()
         embed = discord.Embed(
@@ -282,20 +282,20 @@ class ScriptManagementView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="📤 Upload Script", style=discord.ButtonStyle.success, emoji="📤")
+    @discord.ui.button(label="Upload Script", style=discord.ButtonStyle.success, emoji="📤")
     async def upload_script(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = UploadScriptModal()
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="📋 List Scripts", style=discord.ButtonStyle.primary, emoji="📋")
+    @discord.ui.button(label="List Scripts", style=discord.ButtonStyle.primary, emoji="📋")
     async def list_scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
         await show_script_list(interaction)
 
-    @discord.ui.button(label="📊 Analytics", style=discord.ButtonStyle.secondary, emoji="📊")
+    @discord.ui.button(label="Analytics", style=discord.ButtonStyle.secondary, emoji="📊")
     async def analytics(self, interaction: discord.Interaction, button: discord.ui.Button):
         await show_analytics(interaction)
 
-    @discord.ui.button(label="🔙 Back", style=discord.ButtonStyle.secondary, emoji="🔙")
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
     async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = StaffPanelView()
         embed = discord.Embed(
@@ -311,7 +311,7 @@ class UserSettingsView(discord.ui.View):
         super().__init__(timeout=300)
         self.on_cooldown = on_cooldown
 
-    @discord.ui.button(label="🔄 Reset HWID", style=discord.ButtonStyle.danger, emoji="🔄")
+    @discord.ui.button(label="Reset HWID", style=discord.ButtonStyle.danger, emoji="🔄")
     async def reset_hwid_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.on_cooldown:
             embed = discord.Embed(
@@ -324,7 +324,7 @@ class UserSettingsView(discord.ui.View):
         
         await reset_user_hwid(interaction)
 
-    @discord.ui.button(label="📊 Account Info", style=discord.ButtonStyle.secondary, emoji="📊")
+    @discord.ui.button(label="Account Info", style=discord.ButtonStyle.secondary, emoji="📊")
     async def account_info(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="📊 Account Information",
@@ -405,8 +405,19 @@ class UserPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="🔑 Get My Key", style=discord.ButtonStyle.success, emoji="🔑")
+    @discord.ui.button(label="Get My Key", style=discord.ButtonStyle.success, emoji="🔑")
     async def get_my_key(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Check if user is blacklisted
+        blacklist = load_blacklist()
+        if str(interaction.user.id) in blacklist:
+            embed = discord.Embed(
+                title="⛔ Access Denied",
+                description="Your account has been blacklisted from accessing ZpofeHub services.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+            
         # Check if user has buyer role for access
         buyer_role = discord.utils.get(interaction.guild.roles, id=BUYER_ROLE_ID)
         has_buyer_role = buyer_role in interaction.user.roles
@@ -421,8 +432,19 @@ class UserPanelView(discord.ui.View):
             return
         await show_user_key(interaction)
 
-    @discord.ui.button(label="📜 Get Script", style=discord.ButtonStyle.primary, emoji="📜")
+    @discord.ui.button(label="Get Script", style=discord.ButtonStyle.primary, emoji="📜")
     async def get_script(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Check if user is blacklisted
+        blacklist = load_blacklist()
+        if str(interaction.user.id) in blacklist:
+            embed = discord.Embed(
+                title="⛔ Access Denied",
+                description="Your account has been blacklisted from accessing ZpofeHub services.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+            
         # Check if user has buyer role for access
         buyer_role = discord.utils.get(interaction.guild.roles, id=BUYER_ROLE_ID)
         has_buyer_role = buyer_role in interaction.user.roles
@@ -437,8 +459,19 @@ class UserPanelView(discord.ui.View):
             return
         await send_script_dm(interaction)
 
-    @discord.ui.button(label="⚙️ Settings", style=discord.ButtonStyle.secondary, emoji="⚙️")
+    @discord.ui.button(label="Settings", style=discord.ButtonStyle.secondary, emoji="⚙️")
     async def settings(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Check if user is blacklisted
+        blacklist = load_blacklist()
+        if str(interaction.user.id) in blacklist:
+            embed = discord.Embed(
+                title="⛔ Access Denied",
+                description="Your account has been blacklisted from accessing ZpofeHub services.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+            
         # Check if user has buyer role for access
         buyer_role = discord.utils.get(interaction.guild.roles, id=BUYER_ROLE_ID)
         has_buyer_role = buyer_role in interaction.user.roles
@@ -579,7 +612,325 @@ async def show_user_settings(interaction):
     view = UserSettingsView(cooldown_remaining > 0)
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+# Admin Settings View
+class AdminSettingsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+
+    @discord.ui.button(label="User Management", style=discord.ButtonStyle.primary, emoji="👥")
+    async def user_management(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await show_user_management(interaction)
+
+    @discord.ui.button(label="API Config", style=discord.ButtonStyle.secondary, emoji="🔧")
+    async def api_config(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🔧 API Configuration",
+            description="API settings and webhook configurations",
+            color=0x6a0dad
+        )
+        embed.add_field(name="Base URL", value="`https://yourbot.replit.app`", inline=False)
+        embed.add_field(name="Webhook Port", value="`5000`", inline=True)
+        embed.add_field(name="Status", value="🟢 Online", inline=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(label="Security", style=discord.ButtonStyle.secondary, emoji="🛡️")
+    async def security(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🛡️ Security Settings",
+            description="Security policies and restrictions",
+            color=0x6a0dad
+        )
+        embed.add_field(name="HWID Binding", value="✅ Enabled", inline=True)
+        embed.add_field(name="Reset Cooldown", value="24 hours", inline=True)
+        embed.add_field(name="Key Validation", value="✅ Strict", inline=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
+    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = StaffPanelView()
+        embed = discord.Embed(
+            title="🚀 ZpofeHub Staff Panel",
+            description="Professional staff control panel for managing ZpofeHub infrastructure",
+            color=0x6a0dad,
+            timestamp=datetime.utcnow()
+        )
+        await interaction.response.edit_message(embed=embed, view=view)
+
+# User Management View
+class UserManagementView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+
+    @discord.ui.button(label="Reset User HWID", style=discord.ButtonStyle.danger, emoji="🔄")
+    async def reset_user_hwid(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = ResetUserHWIDModal()
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="Blacklist User", style=discord.ButtonStyle.danger, emoji="⛔")
+    async def blacklist_user(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = BlacklistUserModal()
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="Whitelist User", style=discord.ButtonStyle.success, emoji="✅")
+    async def whitelist_user(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = WhitelistUserModal()
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="View Blacklist", style=discord.ButtonStyle.secondary, emoji="📋")
+    async def view_blacklist(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await show_blacklist(interaction)
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
+    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await show_settings(interaction)
+
+async def show_user_management(interaction):
+    embed = discord.Embed(
+        title="👥 User Management",
+        description="Manage users, reset HWIDs, and control access",
+        color=0x6a0dad,
+        timestamp=datetime.utcnow()
+    )
+
+    embed.add_field(
+        name="🔄 Reset User HWID",
+        value="Reset a specific user's hardware ID binding",
+        inline=False
+    )
+
+    embed.add_field(
+        name="⛔ Blacklist User",
+        value="Prevent a user from accessing the system",
+        inline=False
+    )
+
+    embed.add_field(
+        name="✅ Whitelist User",
+        value="Remove a user from the blacklist",
+        inline=False
+    )
+
+    embed.add_field(
+        name="📋 View Blacklist",
+        value="See all currently blacklisted users",
+        inline=False
+    )
+
+    view = UserManagementView()
+    await interaction.response.edit_message(embed=embed, view=view)
+
+async def show_blacklist(interaction):
+    blacklist = load_blacklist()
+    
+    if not blacklist:
+        embed = discord.Embed(
+            title="📋 Blacklist",
+            description="No users are currently blacklisted.",
+            color=0x00ff00
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        return
+
+    embed = discord.Embed(
+        title="📋 Blacklisted Users",
+        description="Users currently denied access",
+        color=0xff0000,
+        timestamp=datetime.utcnow()
+    )
+
+    for i, (user_id, data) in enumerate(list(blacklist.items())[:10]):  # Show first 10
+        try:
+            user = bot.get_user(int(user_id))
+            username = user.display_name if user else f"Unknown User ({user_id})"
+        except:
+            username = f"Unknown User ({user_id})"
+        
+        blacklisted_at = datetime.fromtimestamp(data.get('blacklisted_at', time.time()))
+        reason = data.get('reason', 'No reason provided')
+        
+        embed.add_field(
+            name=f"👤 {username}",
+            value=f"**Reason:** {reason}\n**Date:** {blacklisted_at.strftime('%Y-%m-%d %H:%M')}",
+            inline=False
+        )
+
+    if len(blacklist) > 10:
+        embed.set_footer(text=f"Showing 10 of {len(blacklist)} blacklisted users")
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# Blacklist storage functions
+BLACKLIST_FILE = "blacklist.json"
+
+def load_blacklist():
+    if os.path.exists(BLACKLIST_FILE):
+        with open(BLACKLIST_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_blacklist(blacklist):
+    with open(BLACKLIST_FILE, 'w') as f:
+        json.dump(blacklist, f, indent=2)
+
 # Modal Classes for Input
+class ResetUserHWIDModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="🔄 Reset User HWID")
+
+    user_id = discord.ui.TextInput(
+        label="User ID",
+        placeholder="Enter the user ID to reset HWID...",
+        required=True,
+        max_length=20
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = self.user_id.value.strip()
+        keys = load_keys()
+        
+        # Find user's key
+        user_key = None
+        for key, data in keys.items():
+            if data.get("owner") == user_id:
+                user_key = key
+                break
+        
+        if not user_key:
+            embed = discord.Embed(
+                title="❌ User Not Found",
+                description=f"No key found for user ID `{user_id}`.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        # Reset HWID
+        keys[user_key]["hwid"] = None
+        keys[user_key]["used"] = False
+        save_keys(keys)
+        
+        # Get user info
+        try:
+            user = bot.get_user(int(user_id))
+            username = user.display_name if user else f"Unknown User ({user_id})"
+        except:
+            username = f"Unknown User ({user_id})"
+        
+        embed = discord.Embed(
+            title="✅ HWID Reset Successfully",
+            description=f"HWID has been reset for user **{username}**.",
+            color=0x00ff00,
+            timestamp=datetime.utcnow()
+        )
+        
+        embed.add_field(name="👤 User", value=username, inline=True)
+        embed.add_field(name="🔑 Key", value=f"`{user_key}`", inline=True)
+        embed.add_field(name="🔄 Action", value="HWID Reset", inline=True)
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class BlacklistUserModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="⛔ Blacklist User")
+
+    user_id = discord.ui.TextInput(
+        label="User ID",
+        placeholder="Enter the user ID to blacklist...",
+        required=True,
+        max_length=20
+    )
+
+    reason = discord.ui.TextInput(
+        label="Reason",
+        placeholder="Enter reason for blacklisting...",
+        style=discord.TextStyle.paragraph,
+        required=False,
+        max_length=500
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = self.user_id.value.strip()
+        reason = self.reason.value or "No reason provided"
+        
+        blacklist = load_blacklist()
+        
+        # Add user to blacklist
+        blacklist[user_id] = {
+            "reason": reason,
+            "blacklisted_at": time.time(),
+            "blacklisted_by": str(interaction.user.id)
+        }
+        
+        save_blacklist(blacklist)
+        
+        # Get user info
+        try:
+            user = bot.get_user(int(user_id))
+            username = user.display_name if user else f"Unknown User ({user_id})"
+        except:
+            username = f"Unknown User ({user_id})"
+        
+        embed = discord.Embed(
+            title="⛔ User Blacklisted",
+            description=f"User **{username}** has been blacklisted.",
+            color=0xff0000,
+            timestamp=datetime.utcnow()
+        )
+        
+        embed.add_field(name="👤 User", value=username, inline=True)
+        embed.add_field(name="📝 Reason", value=reason, inline=True)
+        embed.add_field(name="👮 Staff", value=interaction.user.mention, inline=True)
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class WhitelistUserModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="✅ Whitelist User")
+
+    user_id = discord.ui.TextInput(
+        label="User ID",
+        placeholder="Enter the user ID to remove from blacklist...",
+        required=True,
+        max_length=20
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = self.user_id.value.strip()
+        blacklist = load_blacklist()
+        
+        if user_id not in blacklist:
+            embed = discord.Embed(
+                title="❌ User Not Blacklisted",
+                description=f"User ID `{user_id}` is not currently blacklisted.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        # Remove from blacklist
+        del blacklist[user_id]
+        save_blacklist(blacklist)
+        
+        # Get user info
+        try:
+            user = bot.get_user(int(user_id))
+            username = user.display_name if user else f"Unknown User ({user_id})"
+        except:
+            username = f"Unknown User ({user_id})"
+        
+        embed = discord.Embed(
+            title="✅ User Whitelisted",
+            description=f"User **{username}** has been removed from the blacklist.",
+            color=0x00ff00,
+            timestamp=datetime.utcnow()
+        )
+        
+        embed.add_field(name="👤 User", value=username, inline=True)
+        embed.add_field(name="🔄 Action", value="Removed from blacklist", inline=True)
+        embed.add_field(name="👮 Staff", value=interaction.user.mention, inline=True)
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class KeyInfoModal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="🔍 Key Information")
@@ -814,10 +1165,16 @@ async def show_script_management(interaction):
 
 async def show_settings(interaction):
     embed = discord.Embed(
-        title="⚙️ Settings & Configuration",
-        description="Configure your ZpofeHub panel settings",
+        title="⚙️ Admin Settings & Configuration",
+        description="Configure your ZpofeHub panel settings and manage users",
         color=0x6a0dad,
         timestamp=datetime.utcnow()
+    )
+
+    embed.add_field(
+        name="👥 User Management",
+        value="Reset user HWID, blacklist/whitelist users",
+        inline=False
     )
 
     embed.add_field(
@@ -838,7 +1195,7 @@ async def show_settings(interaction):
         inline=False
     )
 
-    view = StaffPanelView()
+    view = AdminSettingsView()
     await interaction.response.edit_message(embed=embed, view=view)
 
 async def show_key_generation(interaction):
@@ -1341,6 +1698,12 @@ def verify_key():
 
     key_data = keys[key]
 
+    # Check if user is blacklisted
+    blacklist = load_blacklist()
+    owner_id = key_data.get("owner")
+    if owner_id and owner_id in blacklist:
+        return jsonify({"success": False, "message": "User is blacklisted"})
+
     # Check if key is expired
     if key_data.get("expires_at") and time.time() > key_data["expires_at"]:
         return jsonify({"success": False, "message": "Key has expired"})
@@ -1433,7 +1796,10 @@ def execute_script(script_id):
 
 # Run Flask app in separate thread
 def run_flask():
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
+
+
 
 # Error handling
 @bot.event
