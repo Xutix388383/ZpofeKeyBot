@@ -1,0 +1,8 @@
+
+[project]
+name = "script-marketplace"
+version = "1.0.0"
+description = "A script marketplace with Flask and Discord bot"
+
+[tool.upm]
+package-manager = "pip"

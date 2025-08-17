@@ -1,0 +1,10 @@
+
+Flask==2.3.3
+discord.py==2.3.2
+requests==2.31.0
+discord.py
+Flask
+requests
+discord.py
+Flask
+requests
