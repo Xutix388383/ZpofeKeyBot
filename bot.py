@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timedelta
 import asyncio
 import threading
-from flask import Flask
+from flask import Flask, render_template_string, request, redirect, session, flash, jsonify
 
 # Bot setup
 intents = discord.Intents.default()
@@ -26,6 +26,9 @@ BLACKLIST_FILE = "blacklist.json"
 # Required role IDs
 BUYER_ROLE_ID = 1406653314589786204
 STAFF_ROLE_ID = 1399949855799119952
+
+# Flask admin authentication key
+ADMIN_KEY = "ZpofeAdmin97492"
 
 # Load or create storage files
 def load_keys():
@@ -91,68 +94,23 @@ async def on_ready():
     print(f'✅ {bot.user} has connected to Discord!')
     print(f'📊 Bot ID: {bot.user.id}')
     print(f'🌐 Connected to {len(bot.guilds)} guild(s)')
-    
+
     try:
         synced = await bot.tree.sync()
         print(f"✅ Synced {len(synced)} command(s)")
-        
+
         # Create data files if they don't exist
         for file_path in [KEYS_FILE, USERS_FILE, SCRIPTS_FILE, HWID_COOLDOWNS_FILE, BLACKLIST_FILE]:
             if not os.path.exists(file_path):
                 with open(file_path, 'w') as f:
                     json.dump({}, f)
                 print(f"📁 Created {file_path}")
-        
+
         print("🚀 ZpofeHub Bot is ready and operational!")
-        
+
     except Exception as e:
         print(f"❌ Failed to sync commands: {e}")
         print("Bot will continue running but slash commands may not work")
-
-# Staff Panel Command
-@bot.tree.command(name="staffpanel", description="Open the ZpofeHub staff panel")
-async def staff_panel(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="🚀 ZpofeHub Staff Panel",
-        description="Professional staff control panel for managing ZpofeHub infrastructure",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(
-        name="📊 Dashboard Analytics",
-        value="View comprehensive system statistics and performance metrics",
-        inline=False
-    )
-
-    embed.add_field(
-        name="🔑 License Management", 
-        value="Generate, monitor, and manage all license keys in the system",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📝 Script Administration",
-        value="Upload, configure, and monitor protected script deployments",
-        inline=False
-    )
-
-    embed.add_field(
-        name="⚙️ System Configuration",
-        value="Manage system settings, security policies, and user management",
-        inline=False
-    )
-
-    embed.add_field(
-        name="ℹ️ Staff Access Required",
-        value="Click any button below to access staff-only administrative features",
-        inline=False
-    )
-
-    embed.set_footer(text="ZpofeHub Staff Panel • Staff role required for access")
-
-    view = StaffPanelView()
-    await interaction.response.send_message(embed=embed, view=view)
 
 # User Panel Command
 @bot.tree.command(name="userpanel", description="Access your ZpofeHub user panel")
@@ -194,163 +152,6 @@ async def user_panel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, view=view)
 
 # Custom Views for Interactive Panels
-class StaffPanelView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-
-    @discord.ui.button(label="Dashboard", style=discord.ButtonStyle.primary, emoji="📊")
-    async def dashboard(self, interaction: discord.Interaction, button: discord.ui.Button):
-        staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-        has_staff_role = staff_role in interaction.user.roles
-
-        if not has_staff_role:
-            embed = discord.Embed(
-                title="❌ Access Denied",
-                description=f"You need the {staff_role.name if staff_role else 'Staff'} role to access the dashboard.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        await show_dashboard(interaction)
-
-    @discord.ui.button(label="Keys", style=discord.ButtonStyle.secondary, emoji="🔑")
-    async def keys(self, interaction: discord.Interaction, button: discord.ui.Button):
-        staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-        has_staff_role = staff_role in interaction.user.roles
-
-        if not has_staff_role:
-            embed = discord.Embed(
-                title="❌ Access Denied",
-                description=f"You need the {staff_role.name if staff_role else 'Staff'} role to access key management.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        await show_key_management(interaction)
-
-    @discord.ui.button(label="Scripts", style=discord.ButtonStyle.secondary, emoji="📝")
-    async def scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
-        staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-        has_staff_role = staff_role in interaction.user.roles
-
-        if not has_staff_role:
-            embed = discord.Embed(
-                title="❌ Access Denied",
-                description=f"You need the {staff_role.name if staff_role else 'Staff'} role to access script management.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        await show_script_management(interaction)
-
-    @discord.ui.button(label="Settings", style=discord.ButtonStyle.secondary, emoji="⚙️")
-    async def settings(self, interaction: discord.Interaction, button: discord.ui.Button):
-        staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-        has_staff_role = staff_role in interaction.user.roles
-
-        if not has_staff_role:
-            embed = discord.Embed(
-                title="❌ Access Denied",
-                description=f"You need the {staff_role.name if staff_role else 'Staff'} role to access settings.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        await show_settings(interaction)
-
-class KeyManagementView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-
-    @discord.ui.button(label="Generate Key", style=discord.ButtonStyle.success, emoji="🆕")
-    async def generate_key_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_key_generation(interaction)
-
-    @discord.ui.button(label="List Keys", style=discord.ButtonStyle.primary, emoji="📋")
-    async def list_keys(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_key_list(interaction)
-
-    @discord.ui.button(label="Key Info", style=discord.ButtonStyle.secondary, emoji="🔍")
-    async def key_info(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = KeyInfoModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Delete Key", style=discord.ButtonStyle.danger, emoji="🗑️")
-    async def delete_key(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = DeleteKeyModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
-    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = StaffPanelView()
-        embed = discord.Embed(
-            title="🚀 ZpofeHub Staff Panel",
-            description="Select an option from the menu below",
-            color=0x6a0dad
-        )
-        await interaction.response.edit_message(embed=embed, view=view)
-
-class ScriptManagementView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-
-    @discord.ui.button(label="Upload Script", style=discord.ButtonStyle.success, emoji="📤")
-    async def upload_script(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = UploadScriptModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="List Scripts", style=discord.ButtonStyle.primary, emoji="📋")
-    async def list_scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_script_list(interaction)
-
-    @discord.ui.button(label="Analytics", style=discord.ButtonStyle.secondary, emoji="📊")
-    async def analytics(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_analytics(interaction)
-
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
-    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = StaffPanelView()
-        embed = discord.Embed(
-            title="🚀 ZpofeHub Staff Panel",
-            description="Select an option from the menu below",
-            color=0x6a0dad
-        )
-        await interaction.response.edit_message(embed=embed, view=view)
-
-class UserSettingsView(discord.ui.View):
-    def __init__(self, on_cooldown=False):
-        super().__init__(timeout=300)
-        self.on_cooldown = on_cooldown
-
-    @discord.ui.button(label="Reset HWID", style=discord.ButtonStyle.danger, emoji="🔄")
-    async def reset_hwid_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.on_cooldown:
-            embed = discord.Embed(
-                title="❌ Cooldown Active",
-                description="You can only reset your HWID once every 24 hours.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        await reset_user_hwid(interaction)
-
-    @discord.ui.button(label="Account Info", style=discord.ButtonStyle.secondary, emoji="📊")
-    async def account_info(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="📊 Account Information",
-            description="Your ZpofeHub account details",
-            color=0x6a0dad,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="👤 Username", value=interaction.user.display_name, inline=True)
-        embed.add_field(name="🆔 User ID", value=str(interaction.user.id), inline=True)
-        embed.add_field(name="✅ Status", value="Premium User", inline=True)
-        embed.add_field(name="📅 Joined", value=interaction.user.joined_at.strftime("%Y-%m-%d"), inline=True)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
 class UserPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
@@ -430,346 +231,37 @@ class UserPanelView(discord.ui.View):
             return
         await show_user_settings(interaction)
 
-class AdminSettingsView(discord.ui.View):
-    def __init__(self):
+class UserSettingsView(discord.ui.View):
+    def __init__(self, on_cooldown=False):
         super().__init__(timeout=300)
+        self.on_cooldown = on_cooldown
 
-    @discord.ui.button(label="User Management", style=discord.ButtonStyle.primary, emoji="👥")
-    async def user_management(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_user_management(interaction)
+    @discord.ui.button(label="Reset HWID", style=discord.ButtonStyle.danger, emoji="🔄")
+    async def reset_hwid_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.on_cooldown:
+            embed = discord.Embed(
+                title="❌ Cooldown Active",
+                description="You can only reset your HWID once every 24 hours.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
-    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = StaffPanelView()
+        await reset_user_hwid(interaction)
+
+    @discord.ui.button(label="Account Info", style=discord.ButtonStyle.secondary, emoji="📊")
+    async def account_info(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
-            title="🚀 ZpofeHub Staff Panel",
-            description="Professional staff control panel for managing ZpofeHub infrastructure",
+            title="📊 Account Information",
+            description="Your ZpofeHub account details",
             color=0x6a0dad,
             timestamp=datetime.utcnow()
         )
-        await interaction.response.edit_message(embed=embed, view=view)
 
-class UserManagementView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-
-    @discord.ui.button(label="Reset User HWID", style=discord.ButtonStyle.danger, emoji="🔄")
-    async def reset_user_hwid(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = ResetUserHWIDModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Blacklist User", style=discord.ButtonStyle.danger, emoji="⛔")
-    async def blacklist_user(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = BlacklistUserModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Whitelist User", style=discord.ButtonStyle.success, emoji="✅")
-    async def whitelist_user(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = WhitelistUserModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="View Blacklist", style=discord.ButtonStyle.secondary, emoji="📋")
-    async def view_blacklist(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_blacklist(interaction)
-
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji="🔙")
-    async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await show_settings(interaction)
-
-# Modal Classes
-class KeyInfoModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="🔍 Key Information")
-
-    key = discord.ui.TextInput(
-        label="License Key",
-        placeholder="Enter the license key to check...",
-        required=True,
-        max_length=50
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        keys = load_keys()
-        key_value = self.key.value.strip()
-
-        if key_value not in keys:
-            embed = discord.Embed(
-                title="❌ Key Not Found",
-                description=f"The key `{key_value}` was not found in the database.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        key_data = keys[key_value]
-
-        embed = discord.Embed(
-            title="🔍 Key Information",
-            color=0x00ff00,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="🔑 Key", value=f"`{key_value}`", inline=False)
-        embed.add_field(name="📋 Type", value=key_data["type"].title(), inline=True)
-        embed.add_field(name="✅ Used", value="Yes" if key_data["used"] else "No", inline=True)
-
-        if key_data["hwid"]:
-            embed.add_field(name="💻 HWID", value=f"`{key_data['hwid'][:20]}...`", inline=False)
-
-        created_time = datetime.fromtimestamp(key_data["created_at"])
-        embed.add_field(name="📅 Created", value=created_time.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
-
-        if key_data["expires_at"]:
-            expires_time = datetime.fromtimestamp(key_data["expires_at"])
-            embed.add_field(name="⏰ Expires", value=expires_time.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
-
-            if time.time() > key_data["expires_at"]:
-                embed.add_field(name="🔴 Status", value="Expired", inline=True)
-            else:
-                embed.add_field(name="🟢 Status", value="Active", inline=True)
-        else:
-            embed.add_field(name="🟢 Status", value="Active (Permanent)", inline=True)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class DeleteKeyModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="🗑️ Delete Key")
-
-    key = discord.ui.TextInput(
-        label="License Key",
-        placeholder="Enter the license key to delete...",
-        required=True,
-        max_length=50
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-        if staff_role not in interaction.user.roles:
-            embed = discord.Embed(
-                title="❌ Access Denied",
-                description="You need staff permissions to delete keys.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        keys = load_keys()
-        key_value = self.key.value.strip()
-
-        if key_value in keys:
-            del keys[key_value]
-            save_keys(keys)
-
-            embed = discord.Embed(
-                title="✅ Key Deleted",
-                description=f"Key `{key_value}` has been successfully deleted.",
-                color=0x00ff00
-            )
-        else:
-            embed = discord.Embed(
-                title="❌ Key Not Found",
-                description=f"The key `{key_value}` was not found in the database.",
-                color=0xff0000
-            )
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class UploadScriptModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="📤 Upload Script")
-
-    name = discord.ui.TextInput(
-        label="Script Name",
-        placeholder="Enter script name...",
-        required=True,
-        max_length=100
-    )
-
-    description = discord.ui.TextInput(
-        label="Description",
-        placeholder="Enter script description...",
-        style=discord.TextStyle.paragraph,
-        required=False,
-        max_length=500
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        scripts = load_scripts()
-        script_id = generate_script_id()
-
-        scripts[script_id] = {
-            "name": self.name.value,
-            "description": self.description.value or "No description provided",
-            "owner": str(interaction.user.id),
-            "created_at": time.time(),
-            "downloads": 0,
-            "executions": 0
-        }
-
-        save_scripts(scripts)
-
-        embed = discord.Embed(
-            title="✅ Script Uploaded",
-            description=f"Script **{self.name.value}** has been uploaded successfully!",
-            color=0x00ff00,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="📋 Script ID", value=f"`{script_id}`", inline=True)
-        embed.add_field(name="👤 Owner", value=interaction.user.mention, inline=True)
-        embed.add_field(name="📝 Description", value=self.description.value or "No description", inline=False)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class ResetUserHWIDModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="🔄 Reset User HWID")
-
-    user_id = discord.ui.TextInput(
-        label="User ID",
-        placeholder="Enter the user ID to reset HWID...",
-        required=True,
-        max_length=20
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        user_id = self.user_id.value.strip()
-        keys = load_keys()
-
-        user_key = None
-        for key, data in keys.items():
-            if data.get("owner") == user_id:
-                user_key = key
-                break
-
-        if not user_key:
-            embed = discord.Embed(
-                title="❌ User Not Found",
-                description=f"No key found for user ID `{user_id}`.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        keys[user_key]["hwid"] = None
-        keys[user_key]["used"] = False
-        save_keys(keys)
-
-        try:
-            user = bot.get_user(int(user_id))
-            username = user.display_name if user else f"Unknown User ({user_id})"
-        except:
-            username = f"Unknown User ({user_id})"
-
-        embed = discord.Embed(
-            title="✅ HWID Reset Successfully",
-            description=f"HWID has been reset for user **{username}**.",
-            color=0x00ff00,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="👤 User", value=username, inline=True)
-        embed.add_field(name="🔑 Key", value=f"`{user_key}`", inline=True)
-        embed.add_field(name="🔄 Action", value="HWID Reset", inline=True)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class BlacklistUserModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="⛔ Blacklist User")
-
-    user_id = discord.ui.TextInput(
-        label="User ID",
-        placeholder="Enter the user ID to blacklist...",
-        required=True,
-        max_length=20
-    )
-
-    reason = discord.ui.TextInput(
-        label="Reason",
-        placeholder="Enter reason for blacklisting...",
-        style=discord.TextStyle.paragraph,
-        required=False,
-        max_length=500
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        user_id = self.user_id.value.strip()
-        reason = self.reason.value or "No reason provided"
-
-        blacklist = load_blacklist()
-
-        blacklist[user_id] = {
-            "reason": reason,
-            "blacklisted_at": time.time(),
-            "blacklisted_by": str(interaction.user.id)
-        }
-
-        save_blacklist(blacklist)
-
-        try:
-            user = bot.get_user(int(user_id))
-            username = user.display_name if user else f"Unknown User ({user_id})"
-        except:
-            username = f"Unknown User ({user_id})"
-
-        embed = discord.Embed(
-            title="⛔ User Blacklisted",
-            description=f"User **{username}** has been blacklisted.",
-            color=0xff0000,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="👤 User", value=username, inline=True)
-        embed.add_field(name="📝 Reason", value=reason, inline=True)
-        embed.add_field(name="👮 Staff", value=interaction.user.mention, inline=True)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class WhitelistUserModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="✅ Whitelist User")
-
-    user_id = discord.ui.TextInput(
-        label="User ID",
-        placeholder="Enter the user ID to remove from blacklist...",
-        required=True,
-        max_length=20
-    )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        user_id = self.user_id.value.strip()
-        blacklist = load_blacklist()
-
-        if user_id not in blacklist:
-            embed = discord.Embed(
-                title="❌ User Not Blacklisted",
-                description=f"User ID `{user_id}` is not currently blacklisted.",
-                color=0xff0000
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        del blacklist[user_id]
-        save_blacklist(blacklist)
-
-        try:
-            user = bot.get_user(int(user_id))
-            username = user.display_name if user else f"Unknown User ({user_id})"
-        except:
-            username = f"Unknown User ({user_id})"
-
-        embed = discord.Embed(
-            title="✅ User Whitelisted",
-            description=f"User **{username}** has been removed from the blacklist.",
-            color=0x00ff00,
-            timestamp=datetime.utcnow()
-        )
-
-        embed.add_field(name="👤 User", value=username, inline=True)
-        embed.add_field(name="🔄 Action", value="Removed from blacklist", inline=True)
-        embed.add_field(name="👮 Staff", value=interaction.user.mention, inline=True)
+        embed.add_field(name="👤 Username", value=interaction.user.display_name, inline=True)
+        embed.add_field(name="🆔 User ID", value=str(interaction.user.id), inline=True)
+        embed.add_field(name="✅ Status", value="Premium User", inline=True)
+        embed.add_field(name="📅 Joined", value=interaction.user.joined_at.strftime("%Y-%m-%d"), inline=True)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -945,309 +437,6 @@ async def show_user_settings(interaction):
     view = UserSettingsView(cooldown_remaining > 0)
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-async def show_dashboard(interaction):
-    keys = load_keys()
-    scripts = load_scripts()
-    users = load_users()
-
-    total_keys = len(keys)
-    active_keys = sum(1 for k in keys.values() if not k.get("expires_at") or time.time() < k["expires_at"])
-    total_scripts = len(scripts)
-    total_users = len(users)
-
-    embed = discord.Embed(
-        title="📊 Dashboard Overview",
-        description="Your ZpofeHub statistics and overview",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(name="🔑 Total Keys", value=str(total_keys), inline=True)
-    embed.add_field(name="✅ Active Keys", value=str(active_keys), inline=True)
-    embed.add_field(name="📝 Scripts", value=str(total_scripts), inline=True)
-    embed.add_field(name="👥 Users", value=str(total_users), inline=True)
-    embed.add_field(name="⚡ Status", value="🟢 Online", inline=True)
-    embed.add_field(name="🔄 Uptime", value="99.9%", inline=True)
-
-    view = StaffPanelView()
-    await interaction.response.edit_message(embed=embed, view=view)
-
-async def show_key_management(interaction):
-    embed = discord.Embed(
-        title="🔑 Key Management",
-        description="Manage your license keys and access controls",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(
-        name="🆕 Generate Key",
-        value="Create new temporary or permanent keys",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📋 List Keys",
-        value="View all existing keys and their status",
-        inline=False
-    )
-
-    embed.add_field(
-        name="🔍 Key Information",
-        value="Get detailed information about a specific key",
-        inline=False
-    )
-
-    view = KeyManagementView()
-    await interaction.response.edit_message(embed=embed, view=view)
-
-async def show_script_management(interaction):
-    embed = discord.Embed(
-        title="📝 Script Management",
-        description="Upload, manage, and monitor your protected scripts",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(
-        name="📤 Upload Script",
-        value="Upload a new script to the protection system",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📋 Script Library",
-        value="View all uploaded scripts and their statistics",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📊 Analytics",
-        value="View execution statistics and usage data",
-        inline=False
-    )
-
-    view = ScriptManagementView()
-    await interaction.response.edit_message(embed=embed, view=view)
-
-async def show_settings(interaction):
-    embed = discord.Embed(
-        title="⚙️ Admin Settings & Configuration",
-        description="Configure your ZpofeHub panel settings and manage users",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(
-        name="👥 User Management",
-        value="Reset user HWID, blacklist/whitelist users",
-        inline=False
-    )
-
-    view = AdminSettingsView()
-    await interaction.response.edit_message(embed=embed, view=view)
-
-async def show_user_management(interaction):
-    embed = discord.Embed(
-        title="👥 User Management",
-        description="Manage users, reset HWIDs, and control access",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(
-        name="🔄 Reset User HWID",
-        value="Reset a specific user's hardware ID binding",
-        inline=False
-    )
-
-    embed.add_field(
-        name="⛔ Blacklist User",
-        value="Prevent a user from accessing the system",
-        inline=False
-    )
-
-    embed.add_field(
-        name="✅ Whitelist User",
-        value="Remove a user from the blacklist",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📋 View Blacklist",
-        value="See all currently blacklisted users",
-        inline=False
-    )
-
-    view = UserManagementView()
-    await interaction.response.edit_message(embed=embed, view=view)
-
-async def show_blacklist(interaction):
-    blacklist = load_blacklist()
-
-    if not blacklist:
-        embed = discord.Embed(
-            title="📋 Blacklist",
-            description="No users are currently blacklisted.",
-            color=0x00ff00
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="📋 Blacklisted Users",
-        description="Users currently denied access",
-        color=0xff0000,
-        timestamp=datetime.utcnow()
-    )
-
-    for i, (user_id, data) in enumerate(list(blacklist.items())[:10]):
-        try:
-            user = bot.get_user(int(user_id))
-            username = user.display_name if user else f"Unknown User ({user_id})"
-        except:
-            username = f"Unknown User ({user_id})"
-
-        blacklisted_at = datetime.fromtimestamp(data.get('blacklisted_at', time.time()))
-        reason = data.get('reason', 'No reason provided')
-
-        embed.add_field(
-            name=f"👤 {username}",
-            value=f"**Reason:** {reason}\n**Date:** {blacklisted_at.strftime('%Y-%m-%d %H:%M')}",
-            inline=False
-        )
-
-    if len(blacklist) > 10:
-        embed.set_footer(text=f"Showing 10 of {len(blacklist)} blacklisted users")
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-async def show_key_generation(interaction):
-    staff_role = discord.utils.get(interaction.guild.roles, id=STAFF_ROLE_ID)
-    if staff_role not in interaction.user.roles:
-        embed = discord.Embed(
-            title="❌ Access Denied",
-            description="You need staff permissions to generate keys.",
-            color=0xff0000
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-
-    key = generate_key()
-    keys = load_keys()
-
-    keys[key] = {
-        "type": "perm",
-        "created_by": str(interaction.user.id),
-        "created_at": time.time(),
-        "expires_at": None,
-        "hwid": None,
-        "used": False,
-        "owner": None
-    }
-
-    save_keys(keys)
-
-    embed = discord.Embed(
-        title="🔑 Key Generated Successfully",
-        color=0x00ff00,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(name="🔑 New Key", value=f"`{key}`", inline=False)
-    embed.add_field(name="⏰ Duration", value="Permanent", inline=True)
-    embed.add_field(name="📅 Type", value="Staff Generated", inline=True)
-    embed.set_footer(text=f"Generated by {interaction.user}")
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-async def show_key_list(interaction):
-    keys = load_keys()
-
-    if not keys:
-        embed = discord.Embed(
-            title="📝 No Keys Found",
-            description="No license keys have been generated yet.",
-            color=0xff9900
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="📋 License Keys Overview",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    for i, (key, data) in enumerate(list(keys.items())[:5]):
-        status = "🔴 Expired" if data.get("expires_at") and time.time() > data["expires_at"] else "🟢 Active"
-        used = "✅ Used" if data["used"] else "❌ Unused"
-
-        embed.add_field(
-            name=f"`{key[:15]}...`",
-            value=f"**Type:** {data['type']}\n**Status:** {status}\n**Used:** {used}",
-            inline=True
-        )
-
-    if len(keys) > 5:
-        embed.set_footer(text=f"Showing 5 of {len(keys)} keys")
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-async def show_script_list(interaction):
-    scripts = load_scripts()
-
-    if not scripts:
-        embed = discord.Embed(
-            title="📝 No Scripts Found",
-            description="No scripts have been uploaded yet.",
-            color=0xff9900
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="📋 Script Library",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    for script_id, data in list(scripts.items())[:5]:
-        embed.add_field(
-            name=f"📄 {data['name']}",
-            value=f"**ID:** `{script_id}`\n**Downloads:** {data['downloads']}\n**Executions:** {data['executions']}",
-            inline=True
-        )
-
-    if len(scripts) > 5:
-        embed.set_footer(text=f"Showing 5 of {len(scripts)} scripts")
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-async def show_analytics(interaction):
-    scripts = load_scripts()
-    keys = load_keys()
-
-    total_executions = sum(script.get('executions', 0) for script in scripts.values())
-    total_downloads = sum(script.get('downloads', 0) for script in scripts.values())
-    active_keys = sum(1 for k in keys.values() if not k.get("expires_at") or time.time() < k["expires_at"])
-
-    embed = discord.Embed(
-        title="📊 Analytics Dashboard",
-        description="Usage statistics and performance metrics for ZpofeHub",
-        color=0x6a0dad,
-        timestamp=datetime.utcnow()
-    )
-
-    embed.add_field(name="🚀 Total Executions", value=str(total_executions), inline=True)
-    embed.add_field(name="📥 Total Downloads", value=str(total_downloads), inline=True)
-    embed.add_field(name="🔑 Active Keys", value=str(active_keys), inline=True)
-    embed.add_field(name="📝 Total Scripts", value=str(len(scripts)), inline=True)
-    embed.add_field(name="⚡ Success Rate", value="99.2%", inline=True)
-    embed.add_field(name="🌐 Bot Uptime", value="99.9%", inline=True)
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
 # Error handling
 @bot.event
 async def on_command_error(ctx, error):
@@ -1258,11 +447,664 @@ async def on_command_error(ctx, error):
     else:
         await ctx.send(f"❌ An error occurred: {str(error)}")
 
-# Health check web server for Koyeb
+# Flask web server setup
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# Authentication decorator
+def login_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'authenticated' not in session or not session['authenticated']:
+            return redirect('/login')
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
+# HTML Templates
+LOGIN_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZpofeHub Admin Login</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .login-container { 
+            background: rgba(0,0,0,0.8); 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            text-align: center; 
+            min-width: 400px; 
+        }
+        h1 { color: #6a0dad; margin-bottom: 30px; }
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 8px; 
+            background: #333; 
+            color: white; 
+            font-size: 16px; 
+        }
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background: #6a0dad; 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 20px; 
+        }
+        button:hover { background: #8a2be2; }
+        .error { color: #ff4444; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🚀 ZpofeHub Admin Panel</h1>
+        <form method="POST">
+            <input type="password" name="admin_key" placeholder="Enter Admin Key" required>
+            <button type="submit">🔐 Login</button>
+        </form>
+        {% if error %}
+        <div class="error">❌ {{ error }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
+'''
+
+DASHBOARD_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZpofeHub Admin Dashboard</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d); 
+            color: white; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .header { 
+            background: rgba(0,0,0,0.8); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .nav { 
+            display: flex; 
+            gap: 20px; 
+        }
+        .nav a { 
+            color: #6a0dad; 
+            text-decoration: none; 
+            padding: 10px 20px; 
+            background: rgba(106, 13, 173, 0.2); 
+            border-radius: 5px; 
+            transition: all 0.3s; 
+        }
+        .nav a:hover { background: rgba(106, 13, 173, 0.5); }
+        .nav a.active { background: #6a0dad; color: white; }
+        .container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+        }
+        .card { 
+            background: rgba(0,0,0,0.8); 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-left: 4px solid #6a0dad; 
+        }
+        .stat { 
+            font-size: 2em; 
+            color: #6a0dad; 
+            font-weight: bold; 
+        }
+        .logout { 
+            background: #ff4444; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .success { color: #44ff44; }
+        .error { color: #ff4444; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: rgba(0,0,0,0.5); 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+        th, td { 
+            padding: 15px; 
+            text-align: left; 
+            border-bottom: 1px solid #333; 
+        }
+        th { background: #6a0dad; }
+        .btn { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 2px; 
+        }
+        .btn-primary { background: #6a0dad; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; color: #6a0dad; }
+        .form-group input, .form-group textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 5px; 
+            background: #333; 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 ZpofeHub Admin Panel</h1>
+        <div class="nav">
+            <a href="/admin" class="{% if page == 'dashboard' %}active{% endif %}">📊 Dashboard</a>
+            <a href="/admin/keys" class="{% if page == 'keys' %}active{% endif %}">🔑 Keys</a>
+            <a href="/admin/scripts" class="{% if page == 'scripts' %}active{% endif %}">📜 Scripts</a>
+            <a href="/admin/users" class="{% if page == 'users' %}active{% endif %}">👥 Users</a>
+            <a href="/admin/blacklist" class="{% if page == 'blacklist' %}active{% endif %}">⛔ Blacklist</a>
+            <button class="logout" onclick="window.location.href='/logout'">🚪 Logout</button>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="card {{ message.1 }}">{{ message.0 }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {{ content|safe }}
+</body>
+</html>
+'''
 
 @app.route('/')
-def health_check():
+def home():
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>ZpofeHub</title>
+        <style>
+            body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); color: white; text-align: center; padding: 50px; margin: 0; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .status { color: #00ff00; }
+            .admin-link { 
+                display: inline-block; 
+                margin-top: 30px; 
+                padding: 15px 30px; 
+                background: #6a0dad; 
+                color: white; 
+                text-decoration: none; 
+                border-radius: 8px; 
+                transition: background 0.3s; 
+            }
+            .admin-link:hover { background: #8a2be2; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 ZpofeHub</h1>
+            <h2>Premium Script Protection & License Management</h2>
+            <p class="status">✅ Bot Status: Online and Operational</p>
+            <p>Join our Discord server to access premium scripts and license management.</p>
+            <a href="/login" class="admin-link">🔐 Admin Panel</a>
+        </div>
+    </body>
+    </html>
+    '''
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        admin_key = request.form.get('admin_key')
+        if admin_key == ADMIN_KEY:
+            session['authenticated'] = True
+            return redirect('/admin')
+        else:
+            return render_template_string(LOGIN_TEMPLATE, error="Invalid admin key")
+    return render_template_string(LOGIN_TEMPLATE)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    keys = load_keys()
+    scripts = load_scripts()
+    blacklist = load_blacklist()
+
+    total_keys = len(keys)
+    active_keys = sum(1 for k in keys.values() if not k.get("expires_at") or time.time() < k["expires_at"])
+    total_scripts = len(scripts)
+    blacklisted_users = len(blacklist)
+
+    content = f'''
+    <div class="container">
+        <div class="card">
+            <h3>📊 System Statistics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="text-align: center;">
+                    <div class="stat">{total_keys}</div>
+                    <div>Total Keys</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="stat">{active_keys}</div>
+                    <div>Active Keys</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="stat">{total_scripts}</div>
+                    <div>Scripts</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="stat">{blacklisted_users}</div>
+                    <div>Blacklisted Users</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🚀 Quick Actions</h3>
+            <a href="/admin/keys/generate" class="btn btn-success">🆕 Generate New Key</a>
+            <a href="/admin/scripts/upload" class="btn btn-primary">📤 Upload Script</a>
+            <a href="/admin/users/blacklist" class="btn btn-danger">⛔ Blacklist User</a>
+        </div>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='dashboard')
+
+@app.route('/admin/keys')
+@login_required
+def admin_keys():
+    keys = load_keys()
+
+    content = '''
+    <div class="card">
+        <h3>🔑 License Key Management</h3>
+        <a href="/admin/keys/generate" class="btn btn-success">🆕 Generate New Key</a>
+        <table style="margin-top: 20px;">
+            <tr>
+                <th>Key</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+    '''
+
+    for key, data in keys.items():
+        status = "🔴 Expired" if data.get("expires_at") and time.time() > data["expires_at"] else "🟢 Active"
+        used = "✅ Used" if data["used"] else "❌ Unused"
+        owner = data.get('owner', 'Unassigned')
+        created = datetime.fromtimestamp(data['created_at']).strftime('%Y-%m-%d %H:%M')
+
+        content += f'''
+            <tr>
+                <td><code>{key[:20]}...</code></td>
+                <td>{data['type']}</td>
+                <td>{status} • {used}</td>
+                <td>{owner}</td>
+                <td>{created}</td>
+                <td>
+                    <a href="/admin/keys/delete/{key}" class="btn btn-danger" onclick="return confirm('Delete this key?')">🗑️ Delete</a>
+                </td>
+            </tr>
+        '''
+
+    content += '''
+        </table>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='keys')
+
+@app.route('/admin/keys/generate', methods=['GET', 'POST'])
+@login_required
+def generate_admin_key():
+    if request.method == 'POST':
+        key_type = request.form.get('key_type', 'perm')
+        key = generate_key()
+        keys = load_keys()
+
+        keys[key] = {
+            "type": key_type,
+            "created_by": "admin",
+            "created_at": time.time(),
+            "expires_at": None,
+            "hwid": None,
+            "used": False,
+            "owner": None
+        }
+
+        save_keys(keys)
+
+        content = f'''
+        <div class="card success">
+            <h3>✅ Key Generated Successfully</h3>
+            <p><strong>New Key:</strong> <code>{key}</code></p>
+            <p><strong>Type:</strong> {key_type}</p>
+            <a href="/admin/keys" class="btn btn-primary">← Back to Keys</a>
+        </div>
+        '''
+        return render_template_string(DASHBOARD_TEMPLATE, content=content, page='keys')
+
+    content = '''
+    <div class="card">
+        <h3>🆕 Generate New Key</h3>
+        <form method="POST">
+            <div class="form-group">
+                <label>Key Type:</label>
+                <select name="key_type" style="width: 100%; padding: 10px; border: none; border-radius: 5px; background: #333; color: white;">
+                    <option value="perm">Permanent</option>
+                    <option value="temp">Temporary</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">🔑 Generate Key</button>
+            <a href="/admin/keys" class="btn btn-primary">← Back</a>
+        </form>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='keys')
+
+@app.route('/admin/keys/delete/<key>')
+@login_required
+def delete_key(key):
+    keys = load_keys()
+    if key in keys:
+        del keys[key]
+        save_keys(keys)
+    return redirect('/admin/keys')
+
+@app.route('/admin/scripts')
+@login_required
+def admin_scripts():
+    scripts = load_scripts()
+
+    content = '''
+    <div class="card">
+        <h3>📜 Script Management</h3>
+        <a href="/admin/scripts/upload" class="btn btn-success">📤 Upload Script</a>
+        <table style="margin-top: 20px;">
+            <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Downloads</th>
+                <th>Executions</th>
+                <th>Created</th>
+            </tr>
+    '''
+
+    for script_id, data in scripts.items():
+        created = datetime.fromtimestamp(data['created_at']).strftime('%Y-%m-%d %H:%M')
+
+        content += f'''
+            <tr>
+                <td><strong>{data['name']}</strong></td>
+                <td><code>{script_id}</code></td>
+                <td>{data['description'][:50]}...</td>
+                <td>{data['downloads']}</td>
+                <td>{data['executions']}</td>
+                <td>{created}</td>
+            </tr>
+        '''
+
+    content += '''
+        </table>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
+
+@app.route('/admin/scripts/upload', methods=['GET', 'POST'])
+@login_required
+def upload_script():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description', 'No description provided')
+
+        scripts = load_scripts()
+        script_id = generate_script_id()
+
+        scripts[script_id] = {
+            "name": name,
+            "description": description,
+            "owner": "admin",
+            "created_at": time.time(),
+            "downloads": 0,
+            "executions": 0
+        }
+
+        save_scripts(scripts)
+
+        content = f'''
+        <div class="card success">
+            <h3>✅ Script Uploaded Successfully</h3>
+            <p><strong>Name:</strong> {name}</p>
+            <p><strong>Script ID:</strong> <code>{script_id}</code></p>
+            <a href="/admin/scripts" class="btn btn-primary">← Back to Scripts</a>
+        </div>
+        '''
+        return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
+
+    content = '''
+    <div class="card">
+        <h3>📤 Upload New Script</h3>
+        <form method="POST">
+            <div class="form-group">
+                <label>Script Name:</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Description:</label>
+                <textarea name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">📤 Upload Script</button>
+            <a href="/admin/scripts" class="btn btn-primary">← Back</a>
+        </form>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='scripts')
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    keys = load_keys()
+    cooldowns = load_hwid_cooldowns()
+
+    content = '''
+    <div class="card">
+        <h3>👥 User Management</h3>
+        <a href="/admin/users/reset-hwid" class="btn btn-primary">🔄 Reset User HWID</a>
+        <a href="/admin/users/blacklist" class="btn btn-danger">⛔ Blacklist User</a>
+        <table style="margin-top: 20px;">
+            <tr>
+                <th>User ID</th>
+                <th>Key</th>
+                <th>HWID Status</th>
+                <th>Last HWID Reset</th>
+                <th>Actions</th>
+            </tr>
+    '''
+
+    user_keys = {}
+    for key, data in keys.items():
+        if data.get('owner'):
+            user_keys[data['owner']] = key
+
+    for user_id, key in user_keys.items():
+        key_data = keys[key]
+        hwid_status = "Bound" if key_data['hwid'] else "Not bound"
+        last_reset = "Never"
+        if user_id in cooldowns:
+            last_reset = datetime.fromtimestamp(cooldowns[user_id]).strftime('%Y-%m-%d %H:%M')
+
+        content += f'''
+            <tr>
+                <td>{user_id}</td>
+                <td><code>{key[:20]}...</code></td>
+                <td>{hwid_status}</td>
+                <td>{last_reset}</td>
+                <td>
+                    <a href="/admin/users/reset-hwid/{user_id}" class="btn btn-primary">🔄 Reset HWID</a>
+                    <a href="/admin/users/blacklist/{user_id}" class="btn btn-danger">⛔ Blacklist</a>
+                </td>
+            </tr>
+        '''
+
+    content += '''
+        </table>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='users')
+
+@app.route('/admin/users/reset-hwid/<user_id>')
+@login_required
+def reset_user_hwid_admin(user_id):
+    keys = load_keys()
+    user_key = None
+
+    for key, data in keys.items():
+        if data.get("owner") == user_id:
+            user_key = key
+            break
+
+    if user_key:
+        keys[user_key]["hwid"] = None
+        keys[user_key]["used"] = False
+        save_keys(keys)
+
+    return redirect('/admin/users')
+
+@app.route('/admin/blacklist')
+@login_required
+def admin_blacklist():
+    blacklist = load_blacklist()
+
+    content = '''
+    <div class="card">
+        <h3>⛔ Blacklist Management</h3>
+        <a href="/admin/users/blacklist" class="btn btn-danger">⛔ Blacklist User</a>
+        <table style="margin-top: 20px;">
+            <tr>
+                <th>User ID</th>
+                <th>Reason</th>
+                <th>Blacklisted Date</th>
+                <th>Actions</th>
+            </tr>
+    '''
+
+    for user_id, data in blacklist.items():
+        blacklisted_at = datetime.fromtimestamp(data.get('blacklisted_at', time.time())).strftime('%Y-%m-%d %H:%M')
+        reason = data.get('reason', 'No reason provided')
+
+        content += f'''
+            <tr>
+                <td>{user_id}</td>
+                <td>{reason}</td>
+                <td>{blacklisted_at}</td>
+                <td>
+                    <a href="/admin/blacklist/remove/{user_id}" class="btn btn-success">✅ Remove</a>
+                </td>
+            </tr>
+        '''
+
+    content += '''
+        </table>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='blacklist')
+
+@app.route('/admin/users/blacklist', methods=['GET', 'POST'])
+@login_required
+def blacklist_user():
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        reason = request.form.get('reason', 'No reason provided')
+
+        blacklist = load_blacklist()
+        blacklist[user_id] = {
+            "reason": reason,
+            "blacklisted_at": time.time(),
+            "blacklisted_by": "admin"
+        }
+        save_blacklist(blacklist)
+
+        return redirect('/admin/blacklist')
+
+    content = '''
+    <div class="card">
+        <h3>⛔ Blacklist User</h3>
+        <form method="POST">
+            <div class="form-group">
+                <label>User ID:</label>
+                <input type="text" name="user_id" required>
+            </div>
+            <div class="form-group">
+                <label>Reason:</label>
+                <textarea name="reason" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger">⛔ Blacklist User</button>
+            <a href="/admin/blacklist" class="btn btn-primary">← Back</a>
+        </form>
+    </div>
+    '''
+
+    return render_template_string(DASHBOARD_TEMPLATE, content=content, page='blacklist')
+
+@app.route('/admin/blacklist/remove/<user_id>')
+@login_required
+def remove_blacklist(user_id):
+    blacklist = load_blacklist()
+    if user_id in blacklist:
+        del blacklist[user_id]
+        save_blacklist(blacklist)
+    return redirect('/admin/blacklist')
+
+@app.route('/health')
+def health():
+    return {"status": "ok", "bot_status": "running"}
+
+@app.route('/api/status')
+def api_status():
     return {
         "status": "healthy",
         "service": "ZpofeHub Discord Bot",
@@ -1270,21 +1112,17 @@ def health_check():
         "bot_ready": bot.is_ready() if 'bot' in globals() else False
     }
 
-@app.route('/health')
-def health():
-    return {"status": "ok", "bot_status": "running"}
-
 def run_flask():
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 if __name__ == "__main__":
     print("🚀 Starting ZpofeHub Discord Bot...")
-    print("🌐 Starting health check server on port 5000...")
-    
+    print("🌐 Starting Flask admin server on port 5000...")
+
     # Start Flask server in a separate thread
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
-    
+
     print("Checking for bot token...")
 
     bot_token = os.getenv('DISCORD_BOT_TOKEN')
@@ -1292,9 +1130,11 @@ if __name__ == "__main__":
         print("❌ DISCORD_BOT_TOKEN not found!")
         print("Please set your bot token in environment variables")
         exit(1)
-    
+
     print("✅ Bot token found, starting bot...")
-    
+    print(f"🔐 Admin panel accessible at: http://localhost:5000/login")
+    print(f"🔑 Admin key: {ADMIN_KEY}")
+
     try:
         bot.run(bot_token)
     except discord.LoginFailure:
