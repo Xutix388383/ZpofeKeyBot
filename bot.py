@@ -86,12 +86,26 @@ def generate_script_id():
 # Bot events
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
+    print(f'✅ {bot.user} has connected to Discord!')
+    print(f'📊 Bot ID: {bot.user.id}')
+    print(f'🌐 Connected to {len(bot.guilds)} guild(s)')
+    
     try:
         synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} command(s)")
+        print(f"✅ Synced {len(synced)} command(s)")
+        
+        # Create data files if they don't exist
+        for file_path in [KEYS_FILE, USERS_FILE, SCRIPTS_FILE, HWID_COOLDOWNS_FILE, BLACKLIST_FILE]:
+            if not os.path.exists(file_path):
+                with open(file_path, 'w') as f:
+                    json.dump({}, f)
+                print(f"📁 Created {file_path}")
+        
+        print("🚀 ZpofeHub Bot is ready and operational!")
+        
     except Exception as e:
-        print(f"Failed to sync commands: {e}")
+        print(f"❌ Failed to sync commands: {e}")
+        print("Bot will continue running but slash commands may not work")
 
 # Staff Panel Command
 @bot.tree.command(name="staffpanel", description="Open the ZpofeHub staff panel")
@@ -1243,12 +1257,22 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ An error occurred: {str(error)}")
 
 if __name__ == "__main__":
-    print("Starting Discord bot...")
-    print("Make sure to set your DISCORD_BOT_TOKEN in the Secrets tab!")
+    print("🚀 Starting ZpofeHub Discord Bot...")
+    print("Checking for bot token...")
 
     bot_token = os.getenv('DISCORD_BOT_TOKEN')
     if not bot_token:
-        print("❌ Please set DISCORD_BOT_TOKEN in the Secrets tab!")
+        print("❌ DISCORD_BOT_TOKEN not found!")
+        print("Please set your bot token in environment variables")
         exit(1)
-
-    bot.run(bot_token)
+    
+    print("✅ Bot token found, starting bot...")
+    
+    try:
+        bot.run(bot_token)
+    except discord.LoginFailure:
+        print("❌ Invalid bot token! Please check your DISCORD_BOT_TOKEN")
+        exit(1)
+    except Exception as e:
+        print(f"❌ Bot failed to start: {e}")
+        exit(1)
