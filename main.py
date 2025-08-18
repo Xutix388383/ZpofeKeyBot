@@ -55,8 +55,12 @@ def admin():
 def admin_login():
     username = request.form.get('username')
     password = request.form.get('password')
-    # Admin credentials
-    if username == 'Zpofe0902' and password == '0902':
+    
+    # Admin credentials from environment variables with fallbacks
+    admin_username = os.getenv('ADMIN_USERNAME', 'Zpofe0902')
+    admin_password = os.getenv('ADMIN_PASSWORD', '0902')
+    
+    if username == admin_username and password == admin_password:
         session['admin_authenticated'] = True
         return redirect(url_for('admin'))
     return render_template('admin_login.html', error='Invalid credentials')
@@ -112,6 +116,90 @@ def purchase_script(script_id):
     
     return jsonify({'message': 'Order placed successfully! You will be contacted shortly.', 'order_id': order['id']})
 
+def try_port(port):
+    """Try to start the Flask app on a specific port"""
+    try:
+        print(f"🚀 Attempting to start Flask server on port {port}...")
+        app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+        return True
+    except OSError as e:
+        if "Address already in use" in str(e):
+            print(f"⚠️ Port {port} is already in use")
+            return False
+        else:
+            print(f"❌ Error starting server on port {port}: {e}")
+            return False
+    except Exception as e:
+        print(f"❌ Unexpected error on port {port}: {e}")
+        return False
+
+def start_server_with_fallback():
+    """Start server with fallback ports and error handling"""
+    preferred_ports = [5000, 8080, 3000, 8000, 9000, 7000, 6000, 4000]
+    
+    print("🌟 Starting Flask Marketplace Server...")
+    print("📊 Server will handle script marketplace web interface")
+    
+    for port in preferred_ports:
+        try:
+            print(f"🔍 Checking port {port} availability...")
+            import socket
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('0.0.0.0', port))
+                print(f"✅ Port {port} is available")
+            
+            print(f"🚀 Starting Flask server on 0.0.0.0:{port}")
+            print(f"🌐 Web interface will be accessible at: http://localhost:{port}")
+            print("📝 Available endpoints:")
+            print("   • / - Homepage with script marketplace")
+            print("   • /admin - Admin panel for managing scripts")
+            print("   • /purchase/<script_id> - Purchase endpoint")
+            
+            app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+            break
+            
+        except OSError as e:
+            if "Address already in use" in str(e):
+                print(f"⚠️ Port {port} is already in use, trying next port...")
+                continue
+            else:
+                print(f"❌ Network error on port {port}: {e}")
+                continue
+        except KeyboardInterrupt:
+            print("\n🛑 Server stopped by user")
+            break
+        except Exception as e:
+            print(f"❌ Unexpected error on port {port}: {e}")
+            continue
+    else:
+        print("❌ Could not start server on any available port!")
+        print("💡 Tried ports:", preferred_ports)
+        print("🔧 Troubleshooting tips:")
+        print("   • Check if other services are using these ports")
+        print("   • Restart your repl")
+        print("   • Check for permission issues")
+        exit(1)
+
 if __name__ == '__main__':
-    init_data_files()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    try:
+        print("🔧 Checking environment variables...")
+        
+        # Check admin credentials
+        admin_username = os.getenv('ADMIN_USERNAME')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        
+        if admin_username and admin_password:
+            print(f"✅ Admin credentials found in environment")
+        else:
+            print(f"⚠️ Using default admin credentials")
+            print("💡 Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables to customize")
+        
+        print("🚀 Starting Flask marketplace server...")
+        init_data_files()
+        start_server_with_fallback()
+    except KeyboardInterrupt:
+        print("\n🛑 Server shutdown requested")
+    except Exception as e:
+        print(f"❌ Fatal error starting marketplace server: {e}")
+        print("🔧 Please check your configuration and try again")
+        exit(1)

@@ -11,9 +11,9 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Role IDs
-ADMIN_ROLE_ID = 1399949855799119952
-BUYER_ROLE_ID = 1406653314589786204
+# Role IDs from environment variables with fallbacks
+ADMIN_ROLE_ID = int(os.getenv('ADMIN_ROLE_ID', '1399949855799119952'))
+BUYER_ROLE_ID = int(os.getenv('BUYER_ROLE_ID', '1406653314589786204'))
 
 # Data files
 SCRIPTS_FILE = 'scripts.json'
@@ -2413,13 +2413,37 @@ class ScriptDownloadButton(discord.ui.Button):
 # Run the bot
 if __name__ == "__main__":
     print("Starting Discord Script Shop Bot...")
+    print("🔧 Checking environment variables...")
     
+    # Check bot token
     bot_token = os.getenv('BOT_TOKEN') or os.getenv('bot_token')
-    
     if not bot_token:
         print("❌ Bot token environment variable not found!")
         print("Please add your Discord bot token as a secret named 'BOT_TOKEN' or 'bot_token'")
         exit(1)
-    
     print("✅ Bot token found in environment variables")
-    bot.run(bot_token)
+    
+    # Check role IDs
+    admin_role_env = os.getenv('ADMIN_ROLE_ID')
+    buyer_role_env = os.getenv('BUYER_ROLE_ID')
+    
+    if admin_role_env:
+        print(f"✅ Admin role ID found in environment: {ADMIN_ROLE_ID}")
+    else:
+        print(f"⚠️ Using default admin role ID: {ADMIN_ROLE_ID}")
+        print("💡 Set ADMIN_ROLE_ID environment variable to customize")
+    
+    if buyer_role_env:
+        print(f"✅ Buyer role ID found in environment: {BUYER_ROLE_ID}")
+    else:
+        print(f"⚠️ Using default buyer role ID: {BUYER_ROLE_ID}")
+        print("💡 Set BUYER_ROLE_ID environment variable to customize")
+    
+    print("🚀 Starting Discord bot...")
+    
+    try:
+        bot.run(bot_token)
+    except Exception as e:
+        print(f"❌ Failed to start Discord bot: {e}")
+        print("Please check your bot token and internet connection")
+        exit(1)
