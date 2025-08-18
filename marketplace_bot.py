@@ -1527,7 +1527,6 @@ class RemoveBuyerRoleModal(discord.ui.Modal):
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# Include other modal classes from the original code (EditScriptModal, DeleteScriptModal, ViewUserScriptsModal, RemoveUserScriptsModal)
 class EditScriptModal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="Edit Existing Script")
@@ -1833,140 +1832,6 @@ class PublicShopView(discord.ui.View):
         # Create personal shop view with cart
         view = ShopView(self.scripts, [])
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-class GetScriptsPanelView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)  # Persistent view
-    
-    @discord.ui.button(label="📥 Get My Scripts", style=discord.ButtonStyle.success, emoji="📦", custom_id="get_scripts_button")
-    async def get_my_scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Send user's scripts via DM - admin only"""
-        if not is_admin(interaction.user):
-            await interaction.response.send_message("❌ You need administrator permissions to access scripts!", ephemeral=True)
-            return
-        
-        user_scripts = load_user_scripts()
-        user_id = str(interaction.user.id)
-        
-        if user_id not in user_scripts or not user_scripts[user_id]:
-            await interaction.response.send_message("📦 No scripts available for you yet.\nContact an admin if you believe this is an error.", ephemeral=True)
-            return
-        
-        scripts = load_scripts()
-        user_script_ids = user_scripts[user_id]
-        
-        # Try to send DM
-        try:
-            dm_embed = discord.Embed(
-                title="📦 Your Purchased Scripts",
-                description=f"Here are your {len(user_script_ids)} purchased scripts:",
-                color=0x28a745,
-                timestamp=datetime.now()
-            )
-            
-            dm_embed.set_footer(text="Zpofe's Script Shop | Your Personal Scripts")
-            
-            # Create script buttons for DM
-            dm_view = UserScriptsDMView(user_script_ids, scripts)
-            
-            # Add script details to embed
-            for script_id in user_script_ids:
-                script = next((s for s in scripts if s['id'] == script_id), None)
-                if script:
-                    dm_embed.add_field(
-                        name=f"📄 {script['name']}",
-                        value=f"**Category:** {script['category']}\n**Description:** {script['description'][:100]}{'...' if len(script['description']) > 100 else ''}",
-                        inline=False
-                    )
-            
-            await interaction.user.send(embed=dm_embed, view=dm_view)
-            
-            # Confirm in channel
-            await interaction.response.send_message("✅ Your scripts have been sent to your DMs! Check your direct messages.", ephemeral=True)
-            
-        except discord.Forbidden:
-            # If DM fails, send ephemeral message with scripts
-            embed = discord.Embed(
-                title="📦 Your Scripts (DMs Disabled)",
-                description="Your scripts are listed below since DMs are disabled:",
-                color=0xffa500
-            )
-            
-            for script_id in user_script_ids:
-                script = next((s for s in scripts if s['id'] == script_id), None)
-                if script:
-                    embed.add_field(
-                        name=f"📄 {script['name']}",
-                        value=f"**Category:** {script['category']}\n**Price:** ${script['price']:.2f}",
-                        inline=True
-                    )
-            
-            embed.add_field(
-                name="📞 Getting Your Files",
-                value="Contact an admin to receive your script files since DMs are disabled.",
-                inline=False
-            )
-            
-            view = UserScriptsView(user_script_ids, scripts)
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-class UserScriptsDMView(discord.ui.View):
-    def __init__(self, script_ids, scripts):
-        super().__init__(timeout=600)
-        self.script_ids = script_ids
-        self.scripts = scripts
-        
-        # Add buttons for each script (max 25 components)
-        for script_id in script_ids[:20]:  # Limit to 20 scripts
-            script = next((s for s in scripts if s['id'] == script_id), None)
-            if script:
-                button = ScriptDMDownloadButton(script)
-                self.add_item(button)
-
-class ScriptDMDownloadButton(discord.ui.Button):
-    def __init__(self, script):
-        self.script = script
-        super().__init__(
-            label=f"📥 {script['name'][:20]}{'...' if len(script['name']) > 20 else ''}",
-            style=discord.ButtonStyle.success,
-            emoji="📥"
-        )
-    
-    async def callback(self, interaction: discord.Interaction):
-        embed = discord.Embed(
-            title=f"📥 {self.script['name']}",
-            description="Your script is ready for download!",
-            color=0x28a745,
-            timestamp=datetime.now()
-        )
-        
-        embed.add_field(
-            name="📄 Script Details",
-            value=f"**Name:** {self.script['name']}\n**Category:** {self.script['category']}\n**Value:** ${self.script['price']:.2f}",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📋 Description",
-            value=self.script['description'],
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📎 Script File",
-            value="**Important:** This is a demo response. In production, the actual script file would be attached here or provided as a download link.\n\n*Contact the admin to receive your actual script file.*",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📞 Support",
-            value="If you need help with this script or have questions, contact our support team!",
-            inline=False
-        )
-        
-        embed.set_footer(text="Zpofe's Script Shop | Script Download")
-        
-        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class ShopView(discord.ui.View):
     def __init__(self, scripts, cart):
@@ -2318,6 +2183,140 @@ async def get_scripts_panel(interaction: discord.Interaction):
     
     view = GetScriptsPanelView()
     await interaction.response.send_message(embed=embed, view=view)
+
+class GetScriptsPanelView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)  # Persistent view
+    
+    @discord.ui.button(label="📥 Get My Scripts", style=discord.ButtonStyle.success, emoji="📦", custom_id="get_scripts_button")
+    async def get_my_scripts(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Send user's scripts via DM - admin only"""
+        if not is_admin(interaction.user):
+            await interaction.response.send_message("❌ You need administrator permissions to access scripts!", ephemeral=True)
+            return
+        
+        user_scripts = load_user_scripts()
+        user_id = str(interaction.user.id)
+        
+        if user_id not in user_scripts or not user_scripts[user_id]:
+            await interaction.response.send_message("📦 No scripts available for you yet.\nContact an admin if you believe this is an error.", ephemeral=True)
+            return
+        
+        scripts = load_scripts()
+        user_script_ids = user_scripts[user_id]
+        
+        # Try to send DM
+        try:
+            dm_embed = discord.Embed(
+                title="📦 Your Purchased Scripts",
+                description=f"Here are your {len(user_script_ids)} purchased scripts:",
+                color=0x28a745,
+                timestamp=datetime.now()
+            )
+            
+            dm_embed.set_footer(text="Zpofe's Script Shop | Your Personal Scripts")
+            
+            # Create script buttons for DM
+            dm_view = UserScriptsDMView(user_script_ids, scripts)
+            
+            # Add script details to embed
+            for script_id in user_script_ids:
+                script = next((s for s in scripts if s['id'] == script_id), None)
+                if script:
+                    dm_embed.add_field(
+                        name=f"📄 {script['name']}",
+                        value=f"**Category:** {script['category']}\n**Description:** {script['description'][:100]}{'...' if len(script['description']) > 100 else ''}",
+                        inline=False
+                    )
+            
+            await interaction.user.send(embed=dm_embed, view=dm_view)
+            
+            # Confirm in channel
+            await interaction.response.send_message("✅ Your scripts have been sent to your DMs! Check your direct messages.", ephemeral=True)
+            
+        except discord.Forbidden:
+            # If DM fails, send ephemeral message with scripts
+            embed = discord.Embed(
+                title="📦 Your Scripts (DMs Disabled)",
+                description="Your scripts are listed below since DMs are disabled:",
+                color=0xffa500
+            )
+            
+            for script_id in user_script_ids:
+                script = next((s for s in scripts if s['id'] == script_id), None)
+                if script:
+                    embed.add_field(
+                        name=f"📄 {script['name']}",
+                        value=f"**Category:** {script['category']}\n**Price:** ${script['price']:.2f}",
+                        inline=True
+                    )
+            
+            embed.add_field(
+                name="📞 Getting Your Files",
+                value="Contact an admin to receive your script files since DMs are disabled.",
+                inline=False
+            )
+            
+            view = UserScriptsView(user_script_ids, scripts)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+class UserScriptsDMView(discord.ui.View):
+    def __init__(self, script_ids, scripts):
+        super().__init__(timeout=600)
+        self.script_ids = script_ids
+        self.scripts = scripts
+        
+        # Add buttons for each script (max 25 components)
+        for script_id in script_ids[:20]:  # Limit to 20 scripts
+            script = next((s for s in scripts if s['id'] == script_id), None)
+            if script:
+                button = ScriptDMDownloadButton(script)
+                self.add_item(button)
+
+class ScriptDMDownloadButton(discord.ui.Button):
+    def __init__(self, script):
+        self.script = script
+        super().__init__(
+            label=f"📥 {script['name'][:20]}{'...' if len(script['name']) > 20 else ''}",
+            style=discord.ButtonStyle.success,
+            emoji="📥"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title=f"📥 {self.script['name']}",
+            description="Your script is ready for download!",
+            color=0x28a745,
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="📄 Script Details",
+            value=f"**Name:** {self.script['name']}\n**Category:** {self.script['category']}\n**Value:** ${self.script['price']:.2f}",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📋 Description",
+            value=self.script['description'],
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📎 Script File",
+            value="**Important:** This is a demo response. In production, the actual script file would be attached here or provided as a download link.\n\n*Contact the admin to receive your actual script file.*",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📞 Support",
+            value="If you need help with this script or have questions, contact our support team!",
+            inline=False
+        )
+        
+        embed.set_footer(text="Zpofe's Script Shop | Script Download")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @bot.tree.command(name='get_scripts', description='Get your purchased scripts (Admin only)')
 async def get_scripts(interaction: discord.Interaction):
